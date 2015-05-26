@@ -8,8 +8,8 @@ typedef struct {
     SDL_Texture *charset[256];
 } sdlfont;
 
-sdlfont *read_ega_sdlfont(SDL_Renderer *renderer, const char *filename);
-void render_sfont(SDL_Renderer *renderer, sdlfont *sfont, int character, int x, int y);
+sdlfont *read_ega_sdlfont(const char *filename);
+void render_sfont(sdlfont *sfont, unsigned short pair, int x, int y);
 void free_sdlfont(sdlfont *sfont);
 
 #endif
