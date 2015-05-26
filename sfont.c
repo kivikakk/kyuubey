@@ -73,6 +73,7 @@ void render_sfont(sdlfont *sfont, unsigned short pair, int x, int y) {
 
     SDL_Rect src = { 0, 0, 8, 14 };
     SDL_Rect dest = { x * 8, y * 14, 8, 14 };
+    SDL_SetTextureColorMod(sfont->charset[character], fg >> 16, (fg >> 8) & 0xff, fg & 0xff);
     SDL_RenderCopy(renderer, sfont->charset[character], &src, &dest);
 }
 
