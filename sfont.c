@@ -1,6 +1,7 @@
 #include "sfont.h"
 #include "renderer.h"
 
+/* adorable CGA: https://en.wikipedia.org/wiki/Color_Graphics_Adapter#Color_palette */
 static int colors[16] = {
     0x000000,
     0x0000AA,
