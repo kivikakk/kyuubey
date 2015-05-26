@@ -1,11 +1,6 @@
 #include "sfont.h"
 #include "renderer.h"
 
-/* FONT_WIDTH is relatively more involved to change as `egachar' is defined in
- * terms of `unsigned char'. */
-#define FONT_WIDTH  8
-#define FONT_HEIGHT 14
-
 /* adorable CGA: https://en.wikipedia.org/wiki/Color_Graphics_Adapter#Color_palette */
 static int colors[16] = {
     0x000000,
@@ -28,22 +23,22 @@ static int colors[16] = {
 
 typedef struct {
     unsigned char bitmap[FONT_HEIGHT];
-} egachar;
+} rawchar;
 
 typedef struct {
-    egachar charset[256];
-} egafont;
+    rawchar charset[256];
+} rawfont;
 
-sdlfont *read_ega_sdlfont(const char *filename) {
-    egafont font;
+sdlfont *read_raw_sdlfont(const char *filename) {
+    rawfont font;
     FILE *f = fopen(filename, "r");
-    fread(&font, sizeof(egafont), 1, f);
+    fread(&font, sizeof(rawfont), 1, f);
     fclose(f);
 
     sdlfont *sfont = malloc(sizeof(*sfont));
 
     for (int i = 0; i < 256; ++i) {
-        egachar c = font.charset[i];
+        rawchar c = font.charset[i];
         SDL_Texture *t = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, FONT_WIDTH, FONT_HEIGHT);
         SDL_SetTextureBlendMode(t, SDL_BLENDMODE_BLEND);
         SDL_SetRenderTarget(renderer, t);

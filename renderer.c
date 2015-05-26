@@ -15,8 +15,8 @@ int renderer_init(void) {
         "vga", 
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
-        80 * 8,
-        25 * 14,
+        80 * FONT_WIDTH,
+        25 * FONT_HEIGHT,
         0);
 
     if (!window) {
@@ -36,7 +36,7 @@ int renderer_init(void) {
         return 1;
     }
 
-    sfont = read_ega_sdlfont("cp437.ega");
+    sfont = read_raw_sdlfont("cp437.vga");
 
     text_init();
     text_refresh();
