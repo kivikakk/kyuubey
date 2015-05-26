@@ -1,6 +1,6 @@
-SDL2_CONFIG = /usr/local/Cellar/sdl2/2.0.3/bin/sdl2-config
-CFLAGS := $(shell $(SDL2_CONFIG) --cflags)
-LDFLAGS = $(shell $(SDL2_CONFIG) --libs)
+SDL2_CONFIG = /usr/local/bin/sdl2-config
+CFLAGS := $(shell $(SDL2_CONFIG) --cflags) -Wall
+LDFLAGS = $(shell $(SDL2_CONFIG) --libs) -lSDL2main
 SRCS := $(wildcard *.c)
 OBJS := $(SRCS:%.c=out/%.o)
 
