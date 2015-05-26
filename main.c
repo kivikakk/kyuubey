@@ -73,6 +73,15 @@ void loop(void) {
             switch (event.type) {
                 case SDL_QUIT:
                     return;
+
+                case SDL_KEYDOWN:
+                case SDL_KEYUP:
+                    printf(
+                        "%s %s %06d\n",
+                        event.key.state == SDL_PRESSED ? "down" : "up  ",
+                        SDL_GetKeyName(event.key.keysym.sym),
+                        event.key.keysym.mod);
+                    break;
             }
         }
 
