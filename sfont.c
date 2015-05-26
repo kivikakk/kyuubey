@@ -1,6 +1,11 @@
 #include "sfont.h"
 #include "renderer.h"
 
+/* FONT_WIDTH is relatively more involved to change as `egachar' is defined in
+ * terms of `unsigned char'. */
+#define FONT_WIDTH  8
+#define FONT_HEIGHT 14
+
 /* adorable CGA: https://en.wikipedia.org/wiki/Color_Graphics_Adapter#Color_palette */
 static int colors[16] = {
     0x000000,
@@ -22,8 +27,7 @@ static int colors[16] = {
 };
 
 typedef struct {
-    /* 8x14 */
-    unsigned char bitmap[14];
+    unsigned char bitmap[FONT_HEIGHT];
 } egachar;
 
 typedef struct {
@@ -40,15 +44,15 @@ sdlfont *read_ega_sdlfont(const char *filename) {
 
     for (int i = 0; i < 256; ++i) {
         egachar c = font.charset[i];
-        SDL_Texture *t = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 8, 14);
+        SDL_Texture *t = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, FONT_WIDTH, FONT_HEIGHT);
         SDL_SetTextureBlendMode(t, SDL_BLENDMODE_BLEND);
         SDL_SetRenderTarget(renderer, t);
         SDL_RenderClear(renderer);
 
-        for (int row = 0; row < 14; ++row) {
+        for (int row = 0; row < FONT_HEIGHT; ++row) {
             unsigned char rowdata = c.bitmap[row],
                           mask = 0x80;
-            for (int offset = 0; offset < 8; ++offset) {
+            for (int offset = 0; offset < FONT_WIDTH; ++offset) {
                 if (rowdata & mask) {
                     SDL_RenderDrawPoint(renderer, offset, row);
                 }
@@ -69,11 +73,11 @@ void render_sfont(sdlfont *sfont, unsigned short pair, int x, int y) {
         fg = colors[(pair >> 8) & 0xf],
         character = pair & 0xff;
     SDL_SetRenderDrawColor(renderer, bg >> 16, (bg >> 8) & 0xff, bg & 0xff, SDL_ALPHA_OPAQUE);
-    SDL_Rect bgrect = { x * 8, y * 14, 8, 14 };
+    SDL_Rect bgrect = { x * 8, y * FONT_HEIGHT, FONT_WIDTH, FONT_HEIGHT };
     SDL_RenderFillRect(renderer, &bgrect);
 
-    SDL_Rect src = { 0, 0, 8, 14 };
-    SDL_Rect dest = { x * 8, y * 14, 8, 14 };
+    SDL_Rect src = { 0, 0, FONT_WIDTH, FONT_HEIGHT };
+    SDL_Rect dest = { x * FONT_WIDTH, y * FONT_HEIGHT, FONT_WIDTH, FONT_HEIGHT };
     SDL_SetTextureColorMod(sfont->charset[character], fg >> 16, (fg >> 8) & 0xff, fg & 0xff);
     SDL_RenderCopy(renderer, sfont->charset[character], &src, &dest);
 }
