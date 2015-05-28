@@ -16,8 +16,16 @@ int main(int argc, char **argv) {
     return 0;
 }
 
+#define FPS 60
+#define TICK_LENGTH (1000 / FPS)
+#define FLIP_CURSOR 16
+
 void loop(void) {
     SDL_Event event;
+    Uint32 last_tick = SDL_GetTicks();
+
+    text_refresh();
+    int until_flip = FLIP_CURSOR;
 
     while (1) {
         while (SDL_PollEvent(&event)) {
@@ -36,7 +44,21 @@ void loop(void) {
             }
         }
 
-        SDL_Delay(10);
+        text_refresh();
+
+        Uint32 next_tick = last_tick + TICK_LENGTH;
+        last_tick = SDL_GetTicks();
+
+        if (last_tick < next_tick) {
+            SDL_Delay(next_tick - last_tick);
+            last_tick = SDL_GetTicks();
+        }
+
+        --until_flip;
+        if (until_flip == 0) {
+            until_flip = FLIP_CURSOR;
+            text_cursor_toggle();
+        }
     }
 }
 

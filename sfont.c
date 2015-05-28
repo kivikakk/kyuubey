@@ -64,11 +64,11 @@ sdlfont *read_raw_sdlfont(const char *filename) {
 }
 
 void render_sfont(sdlfont *sfont, unsigned short pair, int x, int y) {
-    int bg = colors[(pair >> (8 + 4)) & 0x7],
-        fg = colors[(pair >> 8) & 0xf],
+    int bg = cga_colors[(pair >> (8 + 4)) & 0x7],
+        fg = cga_colors[(pair >> 8) & 0xf],
         character = pair & 0xff;
     SDL_SetRenderDrawColor(renderer, bg >> 16, (bg >> 8) & 0xff, bg & 0xff, SDL_ALPHA_OPAQUE);
-    SDL_Rect bgrect = { x * 8, y * FONT_HEIGHT, FONT_WIDTH, FONT_HEIGHT };
+    SDL_Rect bgrect = { x * FONT_WIDTH, y * FONT_HEIGHT, FONT_WIDTH, FONT_HEIGHT };
     SDL_RenderFillRect(renderer, &bgrect);
 
     SDL_Rect src = { 0, 0, FONT_WIDTH, FONT_HEIGHT };
