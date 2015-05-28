@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-#define FPS 60
+#define FPS 60  /* Technically: vsync rate */
 #define TICK_LENGTH (1000 / FPS)
 #define FLIP_CURSOR 16
 
