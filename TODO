@@ -1,2 +1,6 @@
-* model the application
+* typematic
+  * http://www.pcguide.com/ref/kb/swDOS-c.html
+  * http://www.pcguide.com/ref/kb/sw_Typematic.htm
+* model a text editor
+* model the application GUI
 * lexer + parser
