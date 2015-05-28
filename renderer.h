@@ -11,7 +11,7 @@ void renderer_quit(void);
 
 extern SDL_Window *window;
 extern SDL_Renderer *renderer;
-extern sdlfont *sfont;
+extern sdlfont_t *sfont;
 
 #endif
 

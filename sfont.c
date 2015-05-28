@@ -2,7 +2,7 @@
 #include "renderer.h"
 
 /* adorable CGA: https://en.wikipedia.org/wiki/Color_Graphics_Adapter#Color_palette */
-static int colors[16] = {
+int cga_colors[16] = {
     0x000000,
     0x0000AA,
     0x00AA00,
@@ -23,22 +23,22 @@ static int colors[16] = {
 
 typedef struct {
     unsigned char bitmap[FONT_HEIGHT];
-} rawchar;
+} rawchar_t;
 
 typedef struct {
-    rawchar charset[256];
-} rawfont;
+    rawchar_t charset[256];
+} rawfont_t;
 
-sdlfont *read_raw_sdlfont(const char *filename) {
-    rawfont font;
+sdlfont_t *read_raw_sdlfont(const char *filename) {
+    rawfont_t font;
     FILE *f = fopen(filename, "r");
-    fread(&font, sizeof(rawfont), 1, f);
+    fread(&font, sizeof(rawfont_t), 1, f);
     fclose(f);
 
-    sdlfont *sfont = malloc(sizeof(*sfont));
+    sdlfont_t *sfont = malloc(sizeof(*sfont));
 
     for (int i = 0; i < 256; ++i) {
-        rawchar c = font.charset[i];
+        rawchar_t c = font.charset[i];
         SDL_Texture *t = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, FONT_WIDTH, FONT_HEIGHT);
         SDL_SetTextureBlendMode(t, SDL_BLENDMODE_BLEND);
         SDL_SetRenderTarget(renderer, t);
@@ -63,7 +63,7 @@ sdlfont *read_raw_sdlfont(const char *filename) {
     return sfont;
 }
 
-void render_sfont(sdlfont *sfont, unsigned short pair, int x, int y) {
+void render_sfont(sdlfont_t *sfont, unsigned short pair, int x, int y) {
     int bg = cga_colors[(pair >> (8 + 4)) & 0x7],
         fg = cga_colors[(pair >> 8) & 0xf],
         character = pair & 0xff;
@@ -77,7 +77,7 @@ void render_sfont(sdlfont *sfont, unsigned short pair, int x, int y) {
     SDL_RenderCopy(renderer, sfont->charset[character], &src, &dest);
 }
 
-void free_sdlfont(sdlfont *sfont) {
+void free_sdlfont(sdlfont_t *sfont) {
     for (int i = 0; i < 256; ++i) {
         SDL_DestroyTexture(sfont->charset[i]);
     }

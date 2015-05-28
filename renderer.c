@@ -3,7 +3,7 @@
 
 SDL_Window *window = 0;
 SDL_Renderer *renderer = 0;
-sdlfont *sfont = 0;
+sdlfont_t *sfont = 0;
 
 int renderer_init(void) {
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
