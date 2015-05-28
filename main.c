@@ -1,4 +1,5 @@
 #include "renderer.h"
+#include "qb.h"
 #include "text.h"
 
 static void loop(void);
@@ -8,6 +9,8 @@ int main(int argc, char **argv) {
     if (r) {
         return r;
     }
+
+    qb_init();
 
     loop();
 
@@ -35,16 +38,22 @@ void loop(void) {
 
                 case SDL_KEYDOWN:
                 case SDL_KEYUP:
-                    printf(
-                        "%s %s %06d\n",
-                        event.key.state == SDL_PRESSED ? "down" : "up  ",
-                        SDL_GetKeyName(event.key.keysym.sym),
-                        event.key.keysym.mod);
+                    if (event.key.state == SDL_PRESSED) {
+                        if (event.key.keysym.sym == SDLK_DOWN && cursor_y < total_lines - 1) {
+                            ++cursor_y;
+                        } else if (event.key.keysym.sym == SDLK_UP && cursor_y > 0) {
+                            --cursor_y;
+                        } else if (event.key.keysym.sym == SDLK_LEFT && cursor_x > 0) {
+                            --cursor_x;
+                        } else if (event.key.keysym.sym == SDLK_RIGHT) {
+                            ++cursor_x;
+                        }
+                        qb_render();
+                        text_refresh();
+                    }
                     break;
             }
         }
-
-        text_refresh();
 
         Uint32 next_tick = last_tick + TICK_LENGTH;
         last_tick = SDL_GetTicks();
@@ -58,6 +67,7 @@ void loop(void) {
         if (until_flip == 0) {
             until_flip = FLIP_CURSOR;
             text_cursor_toggle();
+            text_refresh();
         }
     }
 }

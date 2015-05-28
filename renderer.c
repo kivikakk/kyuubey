@@ -38,8 +38,6 @@ int renderer_init(void) {
 
     sfont = read_raw_sdlfont("cp437.vga");
 
-    text_init();
-
     return 0;
 }
 
