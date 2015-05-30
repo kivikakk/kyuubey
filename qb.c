@@ -120,6 +120,11 @@ static void delete_at(doc_line_t *d, int offset, int dir) {
 
         free_doc_line(d);
         --total_lines;
+    } else if (dir == -1) {
+        /* offset > 0 */
+        bcopy(d->line + offset, d->line + offset - 1, d->stored - offset);
+        --d->stored;
+        --cursor_x;
     }
 }
 
