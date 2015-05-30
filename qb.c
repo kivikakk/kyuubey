@@ -11,6 +11,30 @@ int cursor_y = 0;
 int total_lines = 1;
 int qb_running = 1;
 
+static SDL_Keycode shift_table[][2] = {
+    {SDLK_QUOTE, SDLK_QUOTEDBL},
+    {SDLK_COMMA, SDLK_LESS},
+    {SDLK_MINUS, SDLK_UNDERSCORE},
+    {SDLK_PERIOD, SDLK_GREATER},
+    {SDLK_SLASH, SDLK_QUESTION},
+    {SDLK_0, SDLK_RIGHTPAREN},
+    {SDLK_1, SDLK_EXCLAIM},
+    {SDLK_2, SDLK_AT},
+    {SDLK_3, SDLK_HASH},
+    {SDLK_4, SDLK_DOLLAR},
+    {SDLK_5, SDLK_PERCENT},
+    {SDLK_6, SDLK_CARET},
+    {SDLK_7, SDLK_AMPERSAND},
+    {SDLK_8, SDLK_ASTERISK},
+    {SDLK_9, SDLK_LEFTPAREN},
+    {SDLK_SEMICOLON, SDLK_COLON},
+    {SDLK_LEFTBRACKET, '{'},
+    {SDLK_BACKSLASH, '|'},
+    {SDLK_RIGHTBRACKET, '}'},
+    {SDLK_BACKQUOTE, '~'},
+    {SDLK_EQUALS, SDLK_PLUS},
+};
+
 static doc_line_t *create_doc_line(void) {
     doc_line_t *d = malloc(sizeof(*d));
     memset(d, 0, sizeof(*d));
@@ -51,6 +75,29 @@ static void insert_character(doc_line_t *d, int offset, char c) {
     ++d->stored;
 }
 
+static char get_character(SDL_Keycode sym, Uint16 mod) {
+    if (sym >= SDLK_a && sym <= SDLK_z) {
+        if (mod & (KMOD_SHIFT | KMOD_CAPS)) {
+            return (char) (sym - ('a' - 'A'));
+        }
+        return (char) sym;
+    }
+
+    if (mod & KMOD_SHIFT) {
+        for (int i = 0; i < sizeof(shift_table); ++i) {
+            if (shift_table[i][0] == sym) {
+                return shift_table[i][1];
+            }
+        }
+    }
+
+    return (char) sym;
+}
+
+static int is_printable_key(SDL_Keycode sym) {
+    return sym >= SDLK_SPACE && sym <= SDLK_z;
+}
+
 void qb_init(void) {
     active_doc = create_doc_line();
     active_doc->line = strdup("10 PRINT \"LOL\"");
@@ -65,10 +112,6 @@ void qb_init(void) {
     total_lines = 2;
 
     qb_render();
-}
-
-static int is_printable_key(SDL_Keycode sym) {
-    return sym >= SDLK_SPACE && sym <= SDLK_z;
 }
 
 void qb_keypress(SDL_Keycode sym, Uint16 mod) {
@@ -89,7 +132,7 @@ void qb_keypress(SDL_Keycode sym, Uint16 mod) {
         insert_character(
             get_current_doc_line(),
             cursor_x,
-            (char) sym);
+            get_character(sym, mod));
         ++cursor_x;
     }
 

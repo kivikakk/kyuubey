@@ -61,7 +61,7 @@ void loop(void) {
                     qb_keypress(event.key.keysym.sym, event.key.keysym.mod);
                     keydown_tick = SDL_GetTicks();
                     keydown_sym = event.key.keysym.sym;
-                    keydown_mod = event.key.keysym.sym;
+                    keydown_mod = event.key.keysym.mod;
                     typematic_on = 0;
                     break;
 

@@ -1,5 +1,4 @@
 * model a text editor
-  * shifted keys
   * newlines, backspace
   * virtual space entry
   * scrolling
