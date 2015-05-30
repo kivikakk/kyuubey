@@ -12,7 +12,7 @@ int renderer_init(void) {
     }
 
     window = SDL_CreateWindow(
-        "vga", 
+        "kyuubey",
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
         80 * FONT_WIDTH,
