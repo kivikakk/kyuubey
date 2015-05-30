@@ -5,11 +5,22 @@
 #include "qb.h"
 #include "text.h"
 
-doc_line_t *active_doc;
-int cursor_x = 0;
-int cursor_y = 0;
-int total_lines = 1;
 int qb_running = 1;
+
+typedef struct doc_line {
+    char *line;
+    int allocated, stored;
+    struct doc_line *prev, *next;
+} doc_line_t;
+
+static doc_line_t *active_doc;
+static int total_lines = 1;
+
+static int cursor_x = 0;
+static int cursor_y = 0;
+
+static int scroll_x = 0;
+static int scroll_y = 0;
 
 static SDL_Keycode shift_table[][2] = {
     {SDLK_QUOTE, SDLK_QUOTEDBL},
@@ -174,72 +185,7 @@ static int is_printable_key(SDL_Keycode sym) {
     return sym >= SDLK_SPACE && sym <= SDLK_z;
 }
 
-void qb_init(void) {
-    active_doc = create_doc_line();
-    active_doc->line = strdup("10 PRINT \"LOL\"");
-    active_doc->stored = strlen(active_doc->line);
-    active_doc->allocated = active_doc->stored + 1;
-
-    active_doc->next = create_doc_line();
-    active_doc->next->prev = active_doc;
-    active_doc->next->line = strdup("20 GOTO 10");
-    active_doc->next->stored = strlen(active_doc->next->line);
-    active_doc->next->allocated = active_doc->next->stored + 1;
-
-    total_lines = 2;
-
-    qb_render();
-}
-
-void qb_keypress(SDL_Keycode sym, Uint16 mod) {
-    if (sym == SDLK_ESCAPE) {
-        qb_running = 0;
-        return;
-    }
-
-    if (sym == SDLK_DOWN && cursor_y < total_lines - 1) {
-        ++cursor_y;
-        int max = get_current_doc_line()->stored;
-        if (cursor_x > max) {
-            cursor_x = max;
-        }
-    } else if (sym == SDLK_UP && cursor_y > 0) {
-        --cursor_y;
-        int max = get_current_doc_line()->stored;
-        if (cursor_x > max) {
-            cursor_x = max;
-        }
-    } else if (sym == SDLK_LEFT && cursor_x > 0) {
-        --cursor_x;
-    } else if (sym == SDLK_RIGHT) {
-        if (cursor_x < get_current_doc_line()->stored) {
-            ++cursor_x;
-        }
-    } else if (is_printable_key(sym)) {
-        insert_character(
-            get_current_doc_line(),
-            cursor_x,
-            get_character(sym, mod));
-        ++cursor_x;
-    } else if (sym == SDLK_RETURN) {
-        split_line(get_current_doc_line(), cursor_x);
-        cursor_x = 0;
-        ++cursor_y;
-    } else if (sym == SDLK_BACKSPACE) {
-        delete_at(get_current_doc_line(), cursor_x, -1);
-    } else if (sym == SDLK_DELETE) {
-        delete_at(get_current_doc_line(), cursor_x, 0);
-    } else if (sym == SDLK_HOME) {
-        cursor_x = 0;
-    } else if (sym == SDLK_END) {
-        cursor_x = get_current_doc_line()->stored;
-    }
-
-    qb_render();
-    text_refresh();
-}
-
-void qb_render(void) {
+void render(void) {
     for (int i = 0; i < 80 * 25; ++i) {
         screen[i] = 0x1700;
     }
@@ -310,7 +256,9 @@ void qb_render(void) {
     }
 
     doc_line_t *line = active_doc;
-    for (int y = 0; y < 22 && line; ++y, line = line->next) {
+    for (int y = 0; y < scroll_y && line; ++y, line = line->next) {}
+
+    for (int y = 0; y < 21 && line; ++y, line = line->next) {
         for (int x = 0; x < line->stored; ++x) {
             screen[(y + 2) * 80 + 1 + x] += line->line[x];
         }
@@ -370,8 +318,86 @@ void qb_render(void) {
     }
     free(counter);
 
-    screen_cursor_x = cursor_x + 1;
-    screen_cursor_y = cursor_y + 2;
+    screen_cursor_x = cursor_x + 1 - scroll_x;
+    screen_cursor_y = cursor_y + 2 - scroll_y;
+}
+
+static void check_scroll(void) {
+    /* window height: 21 lines (2 to 22) */
+    if (cursor_y < scroll_y) {
+        scroll_y = cursor_y;
+    } else if (cursor_y > scroll_y + 20) {
+        scroll_y = cursor_y - 20;
+    }
+}
+
+void qb_init(void) {
+    active_doc = create_doc_line();
+    active_doc->line = strdup("10 PRINT \"LOL\"");
+    active_doc->stored = strlen(active_doc->line);
+    active_doc->allocated = active_doc->stored + 1;
+
+    active_doc->next = create_doc_line();
+    active_doc->next->prev = active_doc;
+    active_doc->next->line = strdup("20 GOTO 10");
+    active_doc->next->stored = strlen(active_doc->next->line);
+    active_doc->next->allocated = active_doc->next->stored + 1;
+
+    active_doc->next->next = create_doc_line();
+    active_doc->next->prev = active_doc->next;
+
+    total_lines = 3;
+
+    render();
+}
+
+void qb_keypress(SDL_Keycode sym, Uint16 mod) {
+    if (sym == SDLK_ESCAPE) {
+        qb_running = 0;
+        return;
+    }
+
+    if (sym == SDLK_DOWN && cursor_y < total_lines - 1) {
+        ++cursor_y;
+        int max = get_current_doc_line()->stored;
+        if (cursor_x > max) {
+            cursor_x = max;
+        }
+    } else if (sym == SDLK_UP && cursor_y > 0) {
+        --cursor_y;
+        int max = get_current_doc_line()->stored;
+        if (cursor_x > max) {
+            cursor_x = max;
+        }
+    } else if (sym == SDLK_LEFT && cursor_x > 0) {
+        --cursor_x;
+    } else if (sym == SDLK_RIGHT) {
+        if (cursor_x < get_current_doc_line()->stored) {
+            ++cursor_x;
+        }
+    } else if (is_printable_key(sym)) {
+        insert_character(
+            get_current_doc_line(),
+            cursor_x,
+            get_character(sym, mod));
+        ++cursor_x;
+    } else if (sym == SDLK_RETURN) {
+        split_line(get_current_doc_line(), cursor_x);
+        cursor_x = 0;
+        ++cursor_y;
+    } else if (sym == SDLK_BACKSPACE) {
+        delete_at(get_current_doc_line(), cursor_x, -1);
+    } else if (sym == SDLK_DELETE) {
+        delete_at(get_current_doc_line(), cursor_x, 0);
+    } else if (sym == SDLK_HOME) {
+        cursor_x = 0;
+    } else if (sym == SDLK_END) {
+        cursor_x = get_current_doc_line()->stored;
+    }
+
+    check_scroll();
+    render();
+    text_refresh();
 }
 
 /* vim: set sw=4 et: */
