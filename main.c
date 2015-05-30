@@ -35,16 +35,17 @@ void loop(void) {
 
     Uint32 keydown_tick = 0;
     SDL_Keycode keydown_sym;
+    Uint16 keydown_mod;
     int typematic_on = 0;
 
     while (qb_running) {
         if (keydown_tick && !typematic_on && last_tick >= keydown_tick + TYPEMATIC_DELAY) {
             typematic_on = 1;
             keydown_tick = last_tick;
-            qb_keypress(keydown_sym);
+            qb_keypress(keydown_sym, keydown_mod);
         } else if (keydown_tick && typematic_on && last_tick >= keydown_tick + TYPEMATIC_REPEAT) {
             keydown_tick = last_tick;
-            qb_keypress(keydown_sym);
+            qb_keypress(keydown_sym, keydown_mod);
         }
 
         while (SDL_PollEvent(&event)) {
@@ -57,9 +58,10 @@ void loop(void) {
                         break;
                     }
 
-                    qb_keypress(event.key.keysym.sym);
+                    qb_keypress(event.key.keysym.sym, event.key.keysym.mod);
                     keydown_tick = SDL_GetTicks();
                     keydown_sym = event.key.keysym.sym;
+                    keydown_mod = event.key.keysym.sym;
                     typematic_on = 0;
                     break;
 

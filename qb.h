@@ -16,7 +16,7 @@ extern int total_lines;
 extern int qb_running;
 
 void qb_init(void);
-void qb_keypress(SDL_Keycode sym);
+void qb_keypress(SDL_Keycode sym, Uint16 mod);
 void qb_render(void);
 
 #endif

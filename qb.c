@@ -12,11 +12,43 @@ int total_lines = 1;
 int qb_running = 1;
 
 static doc_line_t *create_doc_line(void) {
-    doc_line_t *doc_line = malloc(sizeof(*doc_line));
-    memset(doc_line, 0, sizeof(*doc_line));
-    doc_line->line = malloc(8);
-    doc_line->allocated = 8;
-    return doc_line;
+    doc_line_t *d = malloc(sizeof(*d));
+    memset(d, 0, sizeof(*d));
+    d->line = malloc(8);
+    d->allocated = 8;
+    return d;
+}
+
+static doc_line_t *get_current_doc_line(void) {
+    doc_line_t *d = active_doc;
+    for (int y = 0; y < cursor_y; ++y) {
+        d = d->next;
+    }
+    return d;
+}
+
+static void ensure_available(doc_line_t *d, int required) {
+    int allocated = d->allocated;
+    while (allocated < d->stored + required) {
+        allocated *= 2;
+    }
+
+    if (allocated == d->allocated) {
+        return;
+    }
+
+    char *line = malloc(allocated);
+    memcpy(line, d->line, d->stored);
+    free(d->line);
+    d->line = line;
+    d->allocated = allocated;
+}
+
+static void insert_character(doc_line_t *d, int offset, char c) {
+    ensure_available(d, 1);
+    bcopy(d->line + offset, d->line + offset + 1, d->stored - offset);
+    d->line[offset] = c;
+    ++d->stored;
 }
 
 void qb_init(void) {
@@ -35,7 +67,11 @@ void qb_init(void) {
     qb_render();
 }
 
-void qb_keypress(SDL_Keycode sym) {
+static int is_printable_key(SDL_Keycode sym) {
+    return sym >= SDLK_SPACE && sym <= SDLK_z;
+}
+
+void qb_keypress(SDL_Keycode sym, Uint16 mod) {
     if (sym == SDLK_ESCAPE) {
         qb_running = 0;
         return;
@@ -49,7 +85,14 @@ void qb_keypress(SDL_Keycode sym) {
         --cursor_x;
     } else if (sym == SDLK_RIGHT) {
         ++cursor_x;
+    } else if (is_printable_key(sym)) {
+        insert_character(
+            get_current_doc_line(),
+            cursor_x,
+            (char) sym);
+        ++cursor_x;
     }
+
     qb_render();
     text_refresh();
 }
