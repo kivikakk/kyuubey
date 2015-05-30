@@ -43,6 +43,11 @@ static doc_line_t *create_doc_line(void) {
     return d;
 }
 
+static void free_doc_line(doc_line_t *d) {
+    free(d->line);
+    free(d);
+}
+
 static doc_line_t *get_current_doc_line(void) {
     doc_line_t *d = active_doc;
     for (int y = 0; y < cursor_y; ++y) {
@@ -78,6 +83,7 @@ static void insert_character(doc_line_t *d, int offset, char c) {
 static void split_line(doc_line_t *d, int offset) {
     doc_line_t *n = create_doc_line();
     n->next = d->next;
+    n->prev = d;
     d->next = n;
 
     n->stored = d->stored - offset;
@@ -87,6 +93,34 @@ static void split_line(doc_line_t *d, int offset) {
     d->stored -= n->stored;
 
     ++total_lines;
+}
+
+static void delete_at(doc_line_t *d, int offset, int dir) {
+    /* dir should be -1 (backspace) or 0 (delete) */
+    if (dir == -1 && offset == 0) {
+        doc_line_t *p = d->prev;
+
+        if (!p) {
+            /*  WRONG
+             *   WAY
+             * GO BACK */
+            return;
+        }
+
+        --cursor_y;
+        cursor_x = p->stored;
+
+        ensure_available(p, d->stored);
+        memcpy(p->line + p->stored, d->line, d->stored);
+        p->next = d->next;
+        p->stored += d->stored;
+        if (d->next) {
+            d->next->prev = p;
+        }
+
+        free_doc_line(d);
+        --total_lines;
+    }
 }
 
 static char get_character(SDL_Keycode sym, Uint16 mod) {
@@ -119,6 +153,7 @@ void qb_init(void) {
     active_doc->allocated = active_doc->stored + 1;
 
     active_doc->next = create_doc_line();
+    active_doc->next->prev = active_doc;
     active_doc->next->line = strdup("20 GOTO 10");
     active_doc->next->stored = strlen(active_doc->next->line);
     active_doc->next->allocated = active_doc->next->stored + 1;
@@ -152,6 +187,10 @@ void qb_keypress(SDL_Keycode sym, Uint16 mod) {
         split_line(get_current_doc_line(), cursor_x);
         cursor_x = 0;
         ++cursor_y;
+    } else if (sym == SDLK_BACKSPACE) {
+        delete_at(get_current_doc_line(), cursor_x, -1);
+    } else if (sym == SDLK_DELETE) {
+        delete_at(get_current_doc_line(), cursor_x, 0);
     }
 
     qb_render();

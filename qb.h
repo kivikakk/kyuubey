@@ -6,7 +6,7 @@
 typedef struct doc_line {
     char *line;
     int allocated, stored;
-    struct doc_line *next;
+    struct doc_line *prev, *next;
 } doc_line_t;
 
 extern doc_line_t *active_doc;
