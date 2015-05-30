@@ -75,6 +75,20 @@ static void insert_character(doc_line_t *d, int offset, char c) {
     ++d->stored;
 }
 
+static void split_line(doc_line_t *d, int offset) {
+    doc_line_t *n = create_doc_line();
+    n->next = d->next;
+    d->next = n;
+
+    n->stored = d->stored - offset;
+    ensure_available(n, n->stored);
+    memcpy(n->line, d->line + offset, n->stored);
+
+    d->stored -= n->stored;
+
+    ++total_lines;
+}
+
 static char get_character(SDL_Keycode sym, Uint16 mod) {
     if (sym >= SDLK_a && sym <= SDLK_z) {
         if (mod & (KMOD_SHIFT | KMOD_CAPS)) {
@@ -134,6 +148,10 @@ void qb_keypress(SDL_Keycode sym, Uint16 mod) {
             cursor_x,
             get_character(sym, mod));
         ++cursor_x;
+    } else if (sym == SDLK_RETURN) {
+        split_line(get_current_doc_line(), cursor_x);
+        cursor_x = 0;
+        ++cursor_y;
     }
 
     qb_render();

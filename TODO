@@ -1,5 +1,5 @@
 * model a text editor
-  * newlines, backspace
+  * backspace
   * virtual space entry
   * scrolling
 * model the application GUI
