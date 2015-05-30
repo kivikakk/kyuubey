@@ -229,6 +229,10 @@ void qb_keypress(SDL_Keycode sym, Uint16 mod) {
         delete_at(get_current_doc_line(), cursor_x, -1);
     } else if (sym == SDLK_DELETE) {
         delete_at(get_current_doc_line(), cursor_x, 0);
+    } else if (sym == SDLK_HOME) {
+        cursor_x = 0;
+    } else if (sym == SDLK_END) {
+        cursor_x = get_current_doc_line()->stored;
     }
 
     qb_render();
