@@ -1,6 +1,7 @@
 * model a text editor
   * backspace
-  * virtual space entry
   * scrolling
+  * virtual space
+    * considerations for backspace/delete in virtual space
 * model the application GUI
 * lexer + parser

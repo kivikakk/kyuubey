@@ -176,12 +176,22 @@ void qb_keypress(SDL_Keycode sym, Uint16 mod) {
 
     if (sym == SDLK_DOWN && cursor_y < total_lines - 1) {
         ++cursor_y;
+        int max = get_current_doc_line()->stored;
+        if (cursor_x > max) {
+            cursor_x = max;
+        }
     } else if (sym == SDLK_UP && cursor_y > 0) {
         --cursor_y;
+        int max = get_current_doc_line()->stored;
+        if (cursor_x > max) {
+            cursor_x = max;
+        }
     } else if (sym == SDLK_LEFT && cursor_x > 0) {
         --cursor_x;
     } else if (sym == SDLK_RIGHT) {
-        ++cursor_x;
+        if (cursor_x < get_current_doc_line()->stored) {
+            ++cursor_x;
+        }
     } else if (is_printable_key(sym)) {
         insert_character(
             get_current_doc_line(),
