@@ -9,6 +9,7 @@ doc_line_t *active_doc;
 int cursor_x = 0;
 int cursor_y = 0;
 int total_lines = 1;
+int qb_running = 1;
 
 static doc_line_t *create_doc_line(void) {
     doc_line_t *doc_line = malloc(sizeof(*doc_line));
@@ -32,6 +33,25 @@ void qb_init(void) {
     total_lines = 2;
 
     qb_render();
+}
+
+void qb_keypress(SDL_Keycode sym) {
+    if (sym == SDLK_ESCAPE) {
+        qb_running = 0;
+        return;
+    }
+
+    if (sym == SDLK_DOWN && cursor_y < total_lines - 1) {
+        ++cursor_y;
+    } else if (sym == SDLK_UP && cursor_y > 0) {
+        --cursor_y;
+    } else if (sym == SDLK_LEFT && cursor_x > 0) {
+        --cursor_x;
+    } else if (sym == SDLK_RIGHT) {
+        ++cursor_x;
+    }
+    qb_render();
+    text_refresh();
 }
 
 void qb_render(void) {

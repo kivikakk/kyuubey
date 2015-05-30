@@ -30,7 +30,7 @@ void loop(void) {
     text_refresh();
     int until_flip = FLIP_CURSOR;
 
-    while (1) {
+    while (qb_running) {
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
                 case SDL_QUIT:
@@ -39,17 +39,7 @@ void loop(void) {
                 case SDL_KEYDOWN:
                 case SDL_KEYUP:
                     if (event.key.state == SDL_PRESSED) {
-                        if (event.key.keysym.sym == SDLK_DOWN && cursor_y < total_lines - 1) {
-                            ++cursor_y;
-                        } else if (event.key.keysym.sym == SDLK_UP && cursor_y > 0) {
-                            --cursor_y;
-                        } else if (event.key.keysym.sym == SDLK_LEFT && cursor_x > 0) {
-                            --cursor_x;
-                        } else if (event.key.keysym.sym == SDLK_RIGHT) {
-                            ++cursor_x;
-                        }
-                        qb_render();
-                        text_refresh();
+                        qb_keypress(event.key.keysym.sym);
                     }
                     break;
             }
