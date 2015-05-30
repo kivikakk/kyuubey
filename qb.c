@@ -125,6 +125,24 @@ static void delete_at(doc_line_t *d, int offset, int dir) {
         bcopy(d->line + offset, d->line + offset - 1, d->stored - offset);
         --d->stored;
         --cursor_x;
+    } else if (offset == d->stored) {
+        doc_line_t *n = d->next;
+
+        if (!n) {
+            return;
+        }
+
+        ensure_available(d, n->stored);
+        memcpy(d->line + d->stored, n->line, n->stored);
+        d->stored += n->stored;
+
+        d->next = n->next;
+        if (n->next) {
+            n->next->prev = d;
+        }
+
+        free_doc_line(n);
+        --total_lines;
     }
 }
 
