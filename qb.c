@@ -189,6 +189,8 @@ void render(void) {
     for (int i = 0; i < 80 * 25; ++i) {
         screen[i] = 0x1700;
     }
+
+    /* Render the menu. */
     
     for (int x = 0; x < 80; ++x) {
         screen[x] = 0x7000;
@@ -225,6 +227,8 @@ void render(void) {
     screen[0 * 80 + 76] = 0x7000 + 'l';
     screen[0 * 80 + 77] = 0x7000 + 'p';
 
+    /* Render the titlebar. */
+
     screen[1 * 80 + 0] = 0x17da;
     for (int x = 1; x < 79; ++x) {
         screen[1 * 80 + x] = 0x17c4;
@@ -242,11 +246,15 @@ void render(void) {
 
     screen[1 * 80 + start + j] = 0x7000;
 
+    /* Render the little fullscreen widget at the right. */
+
     screen[1 * 80 + 75] = 0x17b4;
     screen[1 * 80 + 76] = 0x7112;
     screen[1 * 80 + 77] = 0x17c3;
 
     screen[1 * 80 + 79] = 0x17bf;
+
+    /* Draw the editing area and borders. */
 
     for (int y = 2; y < 24; ++y) {
         screen[y * 80 + 0] = screen[y * 80 + 79] = 0x17b3;
@@ -254,6 +262,8 @@ void render(void) {
             screen[y * 80 + x] = 0x1700;
         }
     }
+
+    /* Render the editing text. */
 
     doc_line_t *line = active_doc;
     for (int y = 0; y < scroll_y && line; ++y, line = line->next) {}
@@ -264,19 +274,30 @@ void render(void) {
         }
     }
 
+    /* Draw the vertical scrollbar. */
+
     screen[2 * 80 + 79] = 0x7018;
-    screen[3 * 80 + 79] = 0x0000;
-    for (int y = 4; y < 22; ++y) {
+
+    for (int y = 3; y < 22; ++y) {
         screen[y * 80 + 79] = 0x70b0;
     }
+
+    screen[(3 + (int)((float) cursor_y / (total_lines - 1) * (21 - 3))) * 80 + 79] = 0x0000;
+
     screen[22 * 80 + 79] = 0x7019;
 
+    /* Draw the horizontal scrollbar. */
+
     screen[23 * 80 + 1] = 0x701b;
-    screen[23 * 80 + 2] = 0x0000;
-    for (int x = 3; x < 78; ++x) {
+
+    for (int x = 2; x < 78; ++x) {
         screen[23 * 80 + x] = 0x70b0;
     }
+    screen[23 * 80 + 2] = 0x0000;
+
     screen[23 * 80 + 78] = 0x701a;
+
+    /* Draw the help line. */
 
     const char *footer[] = {
         "Shift+F1=Help",
@@ -308,6 +329,8 @@ void render(void) {
         offset += len + 3;
     }
 
+    /* Draw the ruler. */
+
     screen[24 * 80 + 62] += 0xb3;
 
     char *counter;
@@ -317,6 +340,8 @@ void render(void) {
         screen[24 * 80 + 70 + i] += counter[i];
     }
     free(counter);
+
+    /* Place the cursor. */
 
     screen_cursor_x = cursor_x + 1 - scroll_x;
     screen_cursor_y = cursor_y + 2 - scroll_y;
