@@ -126,6 +126,7 @@ static void delete_at(doc_line_t *d, int offset, int dir) {
         --d->stored;
         --cursor_x;
     } else if (offset == d->stored) {
+        /* dir == 0 */
         doc_line_t *n = d->next;
 
         if (!n) {
@@ -143,6 +144,10 @@ static void delete_at(doc_line_t *d, int offset, int dir) {
 
         free_doc_line(n);
         --total_lines;
+    } else {
+        /* dir == 0, offset < d->stored */
+        bcopy(d->line + offset + 1, d->line + offset, d->stored - offset - 1);
+        --d->stored;
     }
 }
 

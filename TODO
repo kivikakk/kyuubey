@@ -1,5 +1,5 @@
 * model a text editor
-  * backspace
+  * home/end
   * scrolling
   * virtual space
     * considerations for backspace/delete in virtual space
