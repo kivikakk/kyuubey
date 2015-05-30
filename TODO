@@ -1,5 +1,6 @@
+* find the text editing bug???
 * model a text editor
-  * scrolling
+  * horizontal scrolling
   * virtual space
     * considerations for backspace/delete in virtual space
 * model the application GUI
