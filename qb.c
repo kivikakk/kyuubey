@@ -369,7 +369,7 @@ void qb_init(void) {
     active_doc->next->allocated = active_doc->next->stored + 1;
 
     active_doc->next->next = create_doc_line();
-    active_doc->next->prev = active_doc->next;
+    active_doc->next->next->prev = active_doc->next;
 
     total_lines = 3;
 

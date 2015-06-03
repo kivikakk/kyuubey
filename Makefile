@@ -1,7 +1,7 @@
-BIN = kyuubey
+BIN = ./kyuubey
 BUILD_DIR = out
 
-CFLAGS = $(shell $(SDL2_CONFIG) --cflags) -Wall
+CFLAGS = $(shell $(SDL2_CONFIG) --cflags) -Wall -g
 LDFLAGS = $(shell $(SDL2_CONFIG) --libs) -lSDL2main
 
 SDL2_CONFIG = /usr/local/bin/sdl2-config
