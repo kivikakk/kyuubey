@@ -1,16 +1,23 @@
-SDL2_CONFIG = /usr/local/bin/sdl2-config
-CFLAGS := $(shell $(SDL2_CONFIG) --cflags) -Wall
+BIN = kyuubey
+BUILD_DIR = out
+
+CFLAGS = $(shell $(SDL2_CONFIG) --cflags) -Wall
 LDFLAGS = $(shell $(SDL2_CONFIG) --libs) -lSDL2main
-SRCS := $(wildcard *.c)
-OBJS := $(SRCS:%.c=out/%.o)
 
-all: kyuubey
+SDL2_CONFIG = /usr/local/bin/sdl2-config
+SRCS = $(wildcard *.c)
+OBJS = $(SRCS:%.c=$(BUILD_DIR)/%.o)
+DEPS = $(OBJS:$(BUILD_DIR)/%.o=$(BUILD_DIR)/%.d)
 
-kyuubey: $(OBJS)
-	gcc $(LDFLAGS) $(OBJS) -o $@
+all: $(BIN)
 
-out/%.o: %.c
-	gcc -c $(CFLAGS) $< -o $@
+$(BIN): $(OBJS)
+	$(CC) $(LDFLAGS) $^ -o $@
+
+-include $(DEPS)
+
+$(BUILD_DIR)/%.o: %.c
+	$(CC) -c $(CFLAGS) -MMD $< -o $@
 
 clean:
-	-rm $(OBJS) kyuubey
+	-rm $(OBJS) $(DEPS) $(BIN)
