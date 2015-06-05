@@ -1,5 +1,4 @@
 * model a text editor
-  * horizontal scrolling
   * virtual space
     * considerations for backspace/delete in virtual space
 * model the application GUI

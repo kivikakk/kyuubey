@@ -46,6 +46,13 @@ static SDL_Keycode shift_table[][2] = {
     {SDLK_EQUALS, SDLK_PLUS},
 };
 
+static int min(int a, int b) {
+    if (a < b) {
+        return a;
+    }
+    return b;
+}
+
 static doc_line_t *create_doc_line(void) {
     doc_line_t *d = malloc(sizeof(*d));
     memset(d, 0, sizeof(*d));
@@ -269,8 +276,8 @@ void render(void) {
     for (int y = 0; y < scroll_y && line; ++y, line = line->next) {}
 
     for (int y = 0; y < 21 && line; ++y, line = line->next) {
-        for (int x = 0; x < line->stored; ++x) {
-            screen[(y + 2) * 80 + 1 + x] += line->line[x];
+        for (int x = scroll_x; x < min(line->stored, 78 + scroll_x); ++x) {
+            screen[(y + 2) * 80 + 1 + x - scroll_x] += line->line[x];
         }
     }
 
@@ -353,6 +360,13 @@ static void check_scroll(void) {
         scroll_y = cursor_y;
     } else if (cursor_y > scroll_y + 20) {
         scroll_y = cursor_y - 20;
+    }
+
+    /* window width: 78 characters (1 to 78) */
+    if (cursor_x < scroll_x) {
+        scroll_x = cursor_x;
+    } else if (cursor_x > scroll_x + 77) {
+        scroll_x = cursor_x - 77;
     }
 }
 
