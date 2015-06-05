@@ -414,7 +414,7 @@ void qb_keypress(SDL_Keycode sym, Uint16 mod) {
         if (cursor_x < get_current_doc_line()->stored) {
             ++cursor_x;
         }
-    } else if (is_printable_key(sym)) {
+    } else if (is_printable_key(sym) && get_current_doc_line()->stored < 255) {
         insert_character(
             get_current_doc_line(),
             cursor_x,
