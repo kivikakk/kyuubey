@@ -300,7 +300,7 @@ void render(void) {
     for (int x = 2; x < 78; ++x) {
         screen[23 * 80 + x] = 0x70b0;
     }
-    screen[23 * 80 + 2] = 0x0000;
+    screen[23 * 80 + (int)((float) scroll_x / 178 * 75) + 2] = 0x0000;
 
     screen[23 * 80 + 78] = 0x701a;
 
