@@ -11,8 +11,8 @@ void yyerror(ast_t *ast, char const *s) {
 }
 
 int parser_test(void) {
-    void *state = begin_scan("PRINT \"HELLO\"");
-    delete_buffer(state);
+    begin_scan("PRINT \"HELLO\"");
+    finish_scan();
 
     return 0;
 }

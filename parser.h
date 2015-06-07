@@ -10,8 +10,8 @@ void yyerror(ast_t *ast, char const *s);
 int parser_test(void);
 
 /* from lang.l */
-void *begin_scan(char const *s);
-void delete_buffer(void *buffer);
+void begin_scan(char const *s);
+void finish_scan();
 
 #endif
 

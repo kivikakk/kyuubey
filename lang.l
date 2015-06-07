@@ -17,14 +17,12 @@ a       { return A; }
 
 %%
 
-YY_BUFFER_STATE current_state = NULL;
-
-void *begin_scan(char const *s) {
-    return yy_scan_string(s);
+void begin_scan(char const *s) {
+    yy_switch_to_buffer(yy_scan_string(s));
 }
 
-void delete_buffer(void *buffer) {
-    yy_delete_buffer(buffer);
+void finish_scan() {
+    yy_delete_buffer(YY_CURRENT_BUFFER);
 }
 
 /* vim: set sw=4 et: */
