@@ -26,5 +26,8 @@ $(BUILD_DIR)/lang.tab.c: lang.y
 $(BUILD_DIR)/lang.yy.c: lang.l
 	flex -t $< > $@
 
+parser-test: $(BIN)
+	valgrind --suppressions=valgrind.suppressions --dsymutil=yes --leak-check=full $(BIN) parser-test
+
 clean:
 	-rm $(OBJS) $(DEPS) $(BIN)

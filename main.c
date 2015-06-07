@@ -1,10 +1,15 @@
 #include "renderer.h"
 #include "qb.h"
 #include "text.h"
+#include "parser.h"
 
 static void loop(void);
 
 int main(int argc, char **argv) {
+    if (argc == 2 && strcmp(argv[1], "parser-test") == 0) {
+        return parser_test();
+    }
+
     int r = renderer_init();
     if (r) {
         return r;
