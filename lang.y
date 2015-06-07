@@ -44,9 +44,9 @@ stmt:           TOKEN opt_exprlist      { $$ = ast_stmt_alloc(STMT_CALL); $$->ca
 ;
 
 exprlist:       EXPR                    { $$ = $1; }
-              | exprlist ',' EXPR       { $$ = $1; $1->next = $3; $1->nexttype = ','; }
-              | exprlist ';' EXPR       { $$ = $1; $1->next = $3; $1->nexttype = ';'; }
-              | exprlist EXPR           { $$ = $1; $1->next = $2; $1->nexttype = ';'; }
+              | EXPR ',' exprlist       { $$ = $1; $1->next = $3; $1->nexttype = ','; }
+              | EXPR ';' exprlist       { $$ = $1; $1->next = $3; $1->nexttype = ';'; }
+              | EXPR exprlist           { $$ = $1; $1->next = $2; $1->nexttype = ';'; }
 ;
 
 opt_exprlist:   /* empty */             { $$ = 0; }
