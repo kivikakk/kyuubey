@@ -40,6 +40,51 @@ ast_expr_t *ast_integer_alloc(int i) {
     return expr;
 }
 
+static int get_precedence(char op) {
+    switch (op) {
+    case '+': return 1;
+    case '-': return 1;
+    case '*': return 2;
+    case '/': return 2;
+    default: return 0;
+    }
+}
+
+static char get_associativity(char op) { 
+    switch (op) {
+    case '+': return 'L';
+    case '-': return 'L';
+    case '*': return 'L';
+    case '/': return 'L';
+    default: return 'N';
+    }
+}
+
+static void print_subexpr(ast_expr_t *outer, ast_expr_t *inner, char assoc) {
+    int outerp = get_precedence(outer->binary.op);
+    int innerp = inner->type == EXPR_BINARY ? get_precedence(inner->binary.op) : 0;
+
+    if (outerp > innerp && innerp != 0) {
+        printf("(");
+        ast_expr_pp(inner);
+        printf(")");
+    } else if (outerp != innerp) {
+        ast_expr_pp(inner);
+    } else {
+        char outera = get_associativity(outer->binary.op);
+        char innera = inner->type == EXPR_BINARY ? get_precedence(inner->binary.op) : 'N';
+        if (outera == 'N' || innera == 'N') {
+            ast_expr_pp(inner);
+        } else if (outera != assoc) {
+            printf("(");
+            ast_expr_pp(inner);
+            printf(")");
+        } else {
+            ast_expr_pp(inner);
+        }
+    }
+}
+
 void ast_expr_pp(ast_expr_t *expr) {
     switch (expr->type) {
     case EXPR_STRING:
@@ -47,11 +92,9 @@ void ast_expr_pp(ast_expr_t *expr) {
         break;
 
     case EXPR_BINARY:
-        printf("(");
-        ast_expr_pp(expr->binary.a);
+        print_subexpr(expr, expr->binary.a, 'L');
         printf(" %c ", expr->binary.op);
-        ast_expr_pp(expr->binary.b);
-        printf(")");
+        print_subexpr(expr, expr->binary.b, 'R');
         break;
 
     case EXPR_INTEGER:
@@ -230,12 +273,16 @@ int parser_test(void) {
         "PRINT \"Hello\"; \"there\", \"pals\" \"!\"\n"
         "REM 1 + 2 * 3\n"
         "PRINT 1 + 2 * 3\n"
+
         "REM (1 + 2) * 3\n"
         "PRINT (1 + 2) * 3\n"
-        "REM 1 * 2 + 3\n"
-        "PRINT 1 * 2 + 3\n"
+
         "REM 1 * (2 + 3)\n"
         "PRINT 1 * (2 + 3)\n"
+
+        "REM (1 * 2) * (3 * 4) + 1 + (2 + 3)\n"
+        "PRINT (1 * 2) * (3 * 4) + 1 + (2 + 3)\n"
+
         "GOTO\n"
         "\n"
         "REM Okay, sure thing.\n"
