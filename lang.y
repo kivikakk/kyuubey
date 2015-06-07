@@ -8,6 +8,7 @@
 %union {
     ast_comment_t *comment;
     ast_token_t *token;
+    ast_expr_t *expr;
 
     ast_stmt_t *stmt;
 }
@@ -17,9 +18,11 @@
 %token NL
 
 %token <token> TOKEN
+%token <expr> EXPR
 %token <comment> COMMENT
 
 %type <stmt> line stmt
+%type <expr> exprlist opt_exprlist
 
 %%
 
@@ -36,8 +39,18 @@ line:           line_separator          { $$ = 0; }
               | stmt END_OF_FILE        { $$ = $1; }
 ;
 
-stmt:           TOKEN                   { $$ = ast_stmt_alloc(STMT_CALL); $$->call.target = $1; }
+stmt:           TOKEN opt_exprlist      { $$ = ast_stmt_alloc(STMT_CALL); $$->call.target = $1; $$->call.args = $2; }
               | COMMENT                 { $$ = ast_stmt_alloc(STMT_COMMENT); $$->comment = $1; }
+;
+
+exprlist:       EXPR                    { $$ = $1; }
+              | exprlist ',' EXPR       { $$ = $1; $1->next = $3; $1->nexttype = ','; }
+              | exprlist ';' EXPR       { $$ = $1; $1->next = $3; $1->nexttype = ';'; }
+              | exprlist EXPR           { $$ = $1; $1->next = $2; $1->nexttype = ';'; }
+;
+
+opt_exprlist:   /* empty */             { $$ = 0; }
+              | exprlist                { $$ = $1; }
 ;
 
 /* vim: set sw=4 et: */

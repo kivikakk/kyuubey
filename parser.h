@@ -1,6 +1,27 @@
 #ifndef PARSER_H
 #define PARSER_H
 
+/* ast_expr_t */
+
+typedef enum {
+    EXPR_STRING,
+} ast_expr_type_t;
+
+typedef struct ast_expr {
+    ast_expr_type_t type;
+
+    union {
+        char *string;
+    };
+
+    struct ast_expr *next;
+    char nexttype;
+} ast_expr_t;
+
+ast_expr_t *ast_string_alloc(char const *value);
+void ast_expr_pp(ast_expr_t *expr);
+void ast_expr_free(ast_expr_t *expr);
+
 /* ast_comment_t */
 
 typedef struct {
@@ -33,6 +54,7 @@ typedef struct ast_stmt {
     union {
         struct {
             ast_token_t *target;
+            ast_expr_t *args;
         } call;
         ast_comment_t *comment;
     };

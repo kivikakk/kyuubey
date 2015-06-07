@@ -4,6 +4,45 @@
 
 #include "parser.h"
 
+/* ast_expr_t */
+
+ast_expr_t *ast_string_alloc(char const *value) {
+    ast_expr_t *expr = malloc(sizeof(*expr));
+    memset(expr, 0, sizeof(*expr));
+    expr->type = EXPR_STRING;
+    expr->string = strdup(value);
+
+    int len = strlen(expr->string);
+    if (len > 0 && expr->string[len - 1] == '"') {
+        expr->string[len - 1] = 0;
+    }
+
+    return expr;
+}
+
+void ast_expr_pp(ast_expr_t *expr) {
+    switch (expr->type) {
+    case EXPR_STRING:
+        printf("\"%s\"", expr->string);
+        break;
+
+    default:
+        fprintf(stderr, "UNKNOWN EXPR TYPE %d\n", expr->type);
+    }
+}
+
+void ast_expr_free(ast_expr_t *expr) {
+    switch (expr->type) {
+    case EXPR_STRING:
+        free(expr->string);
+        break;
+
+    default:
+        break;
+    }
+    free(expr);
+}
+
 /* ast_comment_t */
 
 ast_comment_t *ast_comment_alloc(char const *value, int is_rem) {
@@ -45,7 +84,19 @@ ast_stmt_t *ast_stmt_alloc(ast_stmt_type_t type) {
 void ast_stmt_pp(ast_stmt_t *stmt) {
     switch (stmt->type) {
     case STMT_CALL:
-        printf("%s\n", stmt->call.target->value);
+        printf("%s", stmt->call.target->value);
+
+        ast_expr_t *args = stmt->call.args;
+        while (args) {
+            printf(" ");
+            ast_expr_pp(args);
+            if (args->next) {
+                printf("%c", args->nexttype);
+            }
+            args = args->next;
+        }
+
+        printf("\n");
         break;
 
     case STMT_COMMENT:
@@ -104,7 +155,7 @@ int parser_test(void) {
     ast_t *ast = ast_alloc();
 
     begin_scan(
-        "PRINT\n"
+        "PRINT \"Hello\"; \"there\", \"pals\" \"!\"\n"
         "GOTO\n"
         "\n"
         "REM Okay, sure thing.\n"

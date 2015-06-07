@@ -5,8 +5,9 @@
 
 %%
 
+\"[^"\n]+\"?    { yylval.expr = ast_string_alloc(yytext + 1); return EXPR; }
 REM[^\n]+       { yylval.comment = ast_comment_alloc(yytext + 3, 1); return COMMENT; }
-'[^\n]+       { yylval.comment = ast_comment_alloc(yytext + 1, 0); return COMMENT; }
+'[^\n]+         { yylval.comment = ast_comment_alloc(yytext + 1, 0); return COMMENT; }
 [a-zA-Z]+       { yylval.token = ast_token_alloc(yytext); return TOKEN; }
 [\t ]+          { }
 .               { return yytext[0]; }
