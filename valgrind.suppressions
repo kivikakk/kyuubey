@@ -2,35 +2,9 @@
    <insert_a_suppression_name_here>
    Memcheck:Leak
    match-leak-kinds: possible
-   fun:malloc_zone_malloc
-   fun:_ZL17buildProtocolListP13category_listPK15protocol_list_tPS3_
-   fun:_ZL12realizeClassP10objc_class
-   fun:_ZL12realizeClassP10objc_class
-   fun:_ZL12realizeClassP10objc_class
-   fun:look_up_class
-   fun:objc_getFutureClass
+   ...
    fun:__CFInitialize
-   fun:_ZN16ImageLoaderMachO11doImageInitERKN11ImageLoader11LinkContextE
-   fun:_ZN16ImageLoaderMachO16doInitializationERKN11ImageLoader11LinkContextE
-   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
-   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
-}
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: possible
-   fun:malloc_zone_malloc
-   fun:_ZL17buildProtocolListP13category_listPK15protocol_list_tPS3_
-   fun:_ZL12realizeClassP10objc_class
-   fun:_ZL12realizeClassP10objc_class
-   fun:_ZL12realizeClassP10objc_class
-   fun:look_up_class
-   fun:objc_getFutureClass
-   fun:__CFInitialize
-   fun:_ZN16ImageLoaderMachO11doImageInitERKN11ImageLoader11LinkContextE
-   fun:_ZN16ImageLoaderMachO16doInitializationERKN11ImageLoader11LinkContextE
-   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
-   fun:_ZN11ImageLoader23recursiveInitializationERKNS_11LinkContextEjRNS_21InitializerTimingListERNS_15UninitedUpwardsE
+   ...
 }
 {
    <insert_a_suppression_name_here>

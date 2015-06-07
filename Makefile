@@ -1,7 +1,7 @@
 BIN = ./kyuubey
 BUILD_DIR = out
 
-CFLAGS = $(shell $(SDL2_CONFIG) --cflags) -Wall -g
+CFLAGS = -I. -Iout $(shell $(SDL2_CONFIG) --cflags) -Wall -g
 LDFLAGS = $(shell $(SDL2_CONFIG) --libs) -lSDL2main
 
 SDL2_CONFIG = /usr/local/bin/sdl2-config
@@ -27,7 +27,7 @@ $(BUILD_DIR)/lang.yy.c: lang.l
 	flex -t $< > $@
 
 parser-test: $(BIN)
-	valgrind --suppressions=valgrind.suppressions --dsymutil=yes --leak-check=full $(BIN) parser-test
+	valgrind --suppressions=valgrind.suppressions --dsymutil=yes --leak-check=full --gen-suppressions=all $(BIN) parser-test
 
 clean:
 	-rm $(OBJS) $(DEPS) $(BIN)

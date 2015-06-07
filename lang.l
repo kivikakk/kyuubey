@@ -13,7 +13,8 @@
 
 %%
 
-a       { return A; }
+[a-zA-Z]        { return TOKEN; }
+\n              { return NL; }
 
 %%
 
