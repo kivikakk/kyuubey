@@ -20,10 +20,42 @@ ast_expr_t *ast_string_alloc(char const *value) {
     return expr;
 }
 
+ast_expr_t *ast_binary_alloc(char op, ast_expr_t *a, ast_expr_t *b) {
+    ast_expr_t *expr = malloc(sizeof(*expr));
+    memset(expr, 0, sizeof(*expr));
+    expr->type = EXPR_BINARY;
+    expr->binary.op = op;
+    expr->binary.a = a;
+    expr->binary.b = b;
+
+    return expr;
+}
+
+ast_expr_t *ast_integer_alloc(int i) {
+    ast_expr_t *expr = malloc(sizeof(*expr));
+    memset(expr, 0, sizeof(*expr));
+    expr->type = EXPR_INTEGER;
+    expr->integer = i;
+
+    return expr;
+}
+
 void ast_expr_pp(ast_expr_t *expr) {
     switch (expr->type) {
     case EXPR_STRING:
         printf("\"%s\"", expr->string);
+        break;
+
+    case EXPR_BINARY:
+        printf("(");
+        ast_expr_pp(expr->binary.a);
+        printf(" %c ", expr->binary.op);
+        ast_expr_pp(expr->binary.b);
+        printf(")");
+        break;
+
+    case EXPR_INTEGER:
+        printf("%d", expr->integer);
         break;
 
     default:
@@ -37,10 +69,27 @@ void ast_expr_free(ast_expr_t *expr) {
         free(expr->string);
         break;
 
-    default:
+    case EXPR_BINARY:
+        ast_expr_free(expr->binary.a);
+        ast_expr_free(expr->binary.b);
         break;
+
+    case EXPR_INTEGER:
+        /* empty */
+        break;
+
+    default:
+        fprintf(stderr, "UNKNOWN EXPR TYPE %d\n", expr->type);
     }
     free(expr);
+}
+
+void ast_expr_free_list(ast_expr_t *expr) {
+    while (expr) {
+        ast_expr_t *next = expr->next;
+        ast_expr_free(expr);
+        expr = next;
+    }
 }
 
 /* ast_comment_t */
@@ -110,7 +159,29 @@ void ast_stmt_pp(ast_stmt_t *stmt) {
 }
 
 void ast_stmt_free(ast_stmt_t *stmt) {
+    switch (stmt->type) {
+    case STMT_CALL:
+        ast_token_free(stmt->call.target);
+        ast_expr_free_list(stmt->call.args);
+        break;
+
+    case STMT_COMMENT:
+        ast_comment_free(stmt->comment);
+        break;
+
+    default:
+        fprintf(stderr, "UNKNOWN STMT TYPE %d\n", stmt->type);
+        break;
+    }
     free(stmt);
+}
+
+void ast_stmt_free_list(ast_stmt_t *stmt) {
+    while (stmt) {
+        ast_stmt_t *next = stmt->next;
+        ast_stmt_free(stmt);
+        stmt = next;
+    }
 }
 
 /* ast_t */
@@ -138,6 +209,7 @@ void ast_pp(ast_t *ast) {
 }
 
 void ast_free(ast_t *ast) {
+    ast_stmt_free_list(ast->stmts);
     free(ast);
 }
 
@@ -156,6 +228,14 @@ int parser_test(void) {
 
     begin_scan(
         "PRINT \"Hello\"; \"there\", \"pals\" \"!\"\n"
+        "REM 1 + 2 * 3\n"
+        "PRINT 1 + 2 * 3\n"
+        "REM (1 + 2) * 3\n"
+        "PRINT (1 + 2) * 3\n"
+        "REM 1 * 2 + 3\n"
+        "PRINT 1 * 2 + 3\n"
+        "REM 1 * (2 + 3)\n"
+        "PRINT 1 * (2 + 3)\n"
         "GOTO\n"
         "\n"
         "REM Okay, sure thing.\n"

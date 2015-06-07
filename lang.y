@@ -18,11 +18,16 @@
 %token NL
 
 %token <token> TOKEN
-%token <expr> EXPR
+%token <expr> IMM
 %token <comment> COMMENT
 
 %type <stmt> line stmt
-%type <expr> exprlist opt_exprlist
+%type <expr> expr exprlist opt_exprlist
+
+%left '+' '-'
+%left '*' '/'
+
+%left '(' ')'
 
 %%
 
@@ -43,14 +48,22 @@ stmt:           TOKEN opt_exprlist      { $$ = ast_stmt_alloc(STMT_CALL); $$->ca
               | COMMENT                 { $$ = ast_stmt_alloc(STMT_COMMENT); $$->comment = $1; }
 ;
 
-exprlist:       EXPR                    { $$ = $1; }
-              | EXPR ',' exprlist       { $$ = $1; $1->next = $3; $1->nexttype = ','; }
-              | EXPR ';' exprlist       { $$ = $1; $1->next = $3; $1->nexttype = ';'; }
-              | EXPR exprlist           { $$ = $1; $1->next = $2; $1->nexttype = ';'; }
+exprlist:       expr                    { $$ = $1; }
+              | expr ',' exprlist       { $$ = $1; $1->next = $3; $1->nexttype = ','; }
+              | expr ';' exprlist       { $$ = $1; $1->next = $3; $1->nexttype = ';'; }
+              | expr exprlist           { $$ = $1; $1->next = $2; $1->nexttype = ';'; }
 ;
 
 opt_exprlist:   /* empty */             { $$ = 0; }
               | exprlist                { $$ = $1; }
+;
+
+expr:           IMM                     { $$ = $1; }
+              | '(' expr ')'            { $$ = $2; }
+              | expr '+' expr           { $$ = ast_binary_alloc('+', $1, $3); }
+              | expr '-' expr           { $$ = ast_binary_alloc('-', $1, $3); }
+              | expr '*' expr           { $$ = ast_binary_alloc('*', $1, $3); }
+              | expr '/' expr           { $$ = ast_binary_alloc('/', $1, $3); }
 ;
 
 /* vim: set sw=4 et: */

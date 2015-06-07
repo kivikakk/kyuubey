@@ -5,6 +5,8 @@
 
 typedef enum {
     EXPR_STRING,
+    EXPR_BINARY,
+    EXPR_INTEGER,
 } ast_expr_type_t;
 
 typedef struct ast_expr {
@@ -12,6 +14,12 @@ typedef struct ast_expr {
 
     union {
         char *string;
+        struct {
+            char op;
+            struct ast_expr *a;
+            struct ast_expr *b;
+        } binary;
+        int integer;
     };
 
     struct ast_expr *next;
@@ -19,8 +27,11 @@ typedef struct ast_expr {
 } ast_expr_t;
 
 ast_expr_t *ast_string_alloc(char const *value);
+ast_expr_t *ast_binary_alloc(char op, ast_expr_t *a, ast_expr_t *b);
+ast_expr_t *ast_integer_alloc(int i);
 void ast_expr_pp(ast_expr_t *expr);
 void ast_expr_free(ast_expr_t *expr);
+void ast_expr_free_list(ast_expr_t *expr);
 
 /* ast_comment_t */
 
@@ -65,6 +76,7 @@ typedef struct ast_stmt {
 ast_stmt_t *ast_stmt_alloc(ast_stmt_type_t type);
 void ast_stmt_pp(ast_stmt_t *stmt);
 void ast_stmt_free(ast_stmt_t *stmt);
+void ast_stmt_free_list(ast_stmt_t *stmt);
 
 /* ast_t */
 
