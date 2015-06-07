@@ -3,15 +3,6 @@
     #include "lang.tab.h"
 %}
 
-%option yywrap stack
-
-%x abc_x
-%s abc_s
-
-%{
-    /* ... */
-%}
-
 %%
 
 REM[^\n]+       { yylval.comment = ast_comment_alloc(yytext + 3, 1); return COMMENT; }
