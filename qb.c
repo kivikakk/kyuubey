@@ -372,20 +372,8 @@ static void check_scroll(void) {
 
 void qb_init(void) {
     active_doc = create_doc_line();
-    active_doc->line = strdup("10 PRINT \"LOL\"");
-    active_doc->stored = strlen(active_doc->line);
-    active_doc->allocated = active_doc->stored + 1;
 
-    active_doc->next = create_doc_line();
-    active_doc->next->prev = active_doc;
-    active_doc->next->line = strdup("20 GOTO 10");
-    active_doc->next->stored = strlen(active_doc->next->line);
-    active_doc->next->allocated = active_doc->next->stored + 1;
-
-    active_doc->next->next = create_doc_line();
-    active_doc->next->next->prev = active_doc->next;
-
-    total_lines = 3;
+    total_lines = 1;
 
     render();
 }
