@@ -306,6 +306,13 @@ void render_editor(editor_t *editor, int has_focus) {
     }
 }
 
+void render_help_item(char const *title, int offset) {
+    int len = strlen(title);
+    for (int j = 0; j < len; ++j) {
+        screen[24 * 80 + offset + j] += title[j];
+    }
+}
+
 void render(void) {
     for (int i = 0; i < 80 * 25; ++i) {
         screen[i] = 0x1700;
@@ -350,12 +357,12 @@ void render(void) {
 
     /* Draw the help line. */
 
-    const char *footer[] = {
-        "Shift+F1=Help",
-        "F6=Window",
-        "F2=Subs",
-        "F5=Run",
-        "F8=Step",
+    const char *help_items[] = {
+        "<Shift+F1=Help>",
+        "<F6=Window>",
+        "<F2=Subs>",
+        "<F5=Run>",
+        "<F8=Step>",
         NULL,
     };
 
@@ -365,19 +372,12 @@ void render(void) {
 
     offset = 1;
     for (int i = 0; ; ++i) {
-        if (!footer[i]) {
+        if (!help_items[i]) {
             break;
         }
 
-        int len = strlen(footer[i]);
-        screen[24 * 80 + offset] += '<';
-        int j;
-        for (j = 0; j < len; ++j) {
-            screen[24 * 80 + offset + 1 + j] += footer[i][j];
-        }
-        screen[24 * 80 + offset + 1 + j] += '>';
-        
-        offset += len + 3;
+        render_help_item(help_items[i], offset);
+        offset += strlen(help_items[i]) + 1;
     }
 
     /* Draw the ruler. */
