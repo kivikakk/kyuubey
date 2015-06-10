@@ -1,5 +1,11 @@
 * model a text editor
-  * virtual space
+  * [ ] virtual space
     * considerations for backspace/delete in virtual space
 * model the application GUI
+  * [ ] menus
+  * [ ] dialogs
+  * [ ] mouse control
 * lexer + parser
+  * [x] parse simple program
+  * [ ] execute simple program
+  * [ ] just start going wild on the index
