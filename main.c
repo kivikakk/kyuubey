@@ -67,6 +67,7 @@ void loop(void) {
                     break;
                 }
 
+                qb_keydown(event.key.keysym.sym, event.key.keysym.mod);
                 qb_keypress(event.key.keysym.sym, event.key.keysym.mod);
                 keydown_tick = SDL_GetTicks();
                 keydown_sym = event.key.keysym.sym;
@@ -75,6 +76,7 @@ void loop(void) {
                 break;
 
             case SDL_KEYUP:
+                qb_keyup(event.key.keysym.sym);
                 keydown_tick = 0;
                 break;
 

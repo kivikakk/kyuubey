@@ -16,7 +16,7 @@ typedef struct doc_line {
 
 typedef struct {
     char *title;
-    char is_immediate_window;
+    int is_immediate_window;
 
     doc_line_t *doc;
     int total_lines;
@@ -29,6 +29,9 @@ typedef struct {
 
 static editor_t *main_editor;
 static editor_t *immediate_editor;
+
+static int alt_held = 0;
+static int menubar_focus = 0;
 
 static SDL_Keycode shift_table[][2] = {
     {SDLK_QUOTE, SDLK_QUOTEDBL},
@@ -211,6 +214,15 @@ static int is_printable_key(SDL_Keycode sym) {
     return sym >= SDLK_SPACE && sym <= SDLK_z;
 }
 
+void render_menu_option(char const *title, int start) {
+    int len = strlen(title);
+
+    screen[0 * 80 + start + 1] = (alt_held ? 0x7f00 : 0x7000) | (title[0]);
+    for (int j = 1; j < len; ++j) {
+        screen[0 * 80 + start + 1 + j] = 0x7000 | (title[j]);
+    }
+}
+
 void render_editor(editor_t *editor, int has_focus) {
     /* Render the titlebar. */
 
@@ -318,18 +330,11 @@ void render(void) {
             break;
         }
 
-        int len = strlen(menu_options[i]);
-        for (int j = 0; j < len; ++j) {
-            screen[0 * 80 + offset + 1 + j] = 0x7000 | (menu_options[i][j]);
-        }
-
-        offset += len + 2;
+        render_menu_option(menu_options[i], offset);
+        offset += strlen(menu_options[i]) + 2;
     }
 
-    screen[0 * 80 + 74] = 0x7000 + 'H';
-    screen[0 * 80 + 75] = 0x7000 + 'e';
-    screen[0 * 80 + 76] = 0x7000 + 'l';
-    screen[0 * 80 + 77] = 0x7000 + 'p';
+    render_menu_option("Help", 73);
 
     /* Draw the editors. */
 
@@ -409,6 +414,23 @@ void qb_init(void) {
     immediate_editor->is_immediate_window = 1;
 
     render();
+}
+
+void qb_keydown(SDL_Keycode sym, Uint16 mod) {
+    if ((sym == SDLK_LALT || sym == SDLK_RALT) && !alt_held) {
+        alt_held = 1;
+        render();
+        text_refresh();
+    }
+}
+
+void qb_keyup(SDL_Keycode sym) {
+    if ((sym == SDLK_LALT || sym == SDLK_RALT) && alt_held) {
+        alt_held = 0;
+        menubar_focus = 1;
+        render();
+        text_refresh();
+    }
 }
 
 void qb_keypress(SDL_Keycode sym, Uint16 mod) {
