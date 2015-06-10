@@ -32,6 +32,7 @@ static editor_t *immediate_editor;
 
 static int alt_held = 0;
 static int menubar_focus = 0;
+static int selected_menu = 0;
 
 static SDL_Keycode shift_table[][2] = {
     {SDLK_QUOTE, SDLK_QUOTEDBL},
@@ -214,13 +215,17 @@ static int is_printable_key(SDL_Keycode sym) {
     return sym >= SDLK_SPACE && sym <= SDLK_z;
 }
 
-void render_menu_option(char const *title, int start) {
+void render_menu_option(char const *title, int start, int index) {
     int len = strlen(title);
 
-    screen[0 * 80 + start + 1] = (alt_held ? 0x7f00 : 0x7000) | (title[0]);
+    unsigned short back = menubar_focus && selected_menu == index ? 0x0700 : 0x7000;
+
+    screen[0 * 80 + start + 0] = back;
+    screen[0 * 80 + start + 1] = back | ((alt_held || menubar_focus) ? 0x0f00 : 0x0000) | (title[0]);
     for (int j = 1; j < len; ++j) {
-        screen[0 * 80 + start + 1 + j] = 0x7000 | (title[j]);
+        screen[0 * 80 + start + 1 + j] = back | (title[j]);
     }
+    screen[0 * 80 + start + 1 + len] = back;
 }
 
 void render_editor(editor_t *editor, int has_focus) {
@@ -330,11 +335,11 @@ void render(void) {
             break;
         }
 
-        render_menu_option(menu_options[i], offset);
+        render_menu_option(menu_options[i], offset, i);
         offset += strlen(menu_options[i]) + 2;
     }
 
-    render_menu_option("Help", 73);
+    render_menu_option("Help", 73, 8);
 
     /* Draw the editors. */
 
@@ -427,7 +432,14 @@ void qb_keydown(SDL_Keycode sym, Uint16 mod) {
 void qb_keyup(SDL_Keycode sym) {
     if ((sym == SDLK_LALT || sym == SDLK_RALT) && alt_held) {
         alt_held = 0;
-        menubar_focus = 1;
+
+        if (!menubar_focus) {
+            menubar_focus = 1;
+            selected_menu = 0;
+        } else {
+            menubar_focus = 0;
+        }
+
         render();
         text_refresh();
     }
