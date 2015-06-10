@@ -13,14 +13,18 @@ typedef struct doc_line {
     struct doc_line *prev, *next;
 } doc_line_t;
 
-static doc_line_t *active_doc;
-static int total_lines = 1;
+typedef struct {
+    doc_line_t *doc;
+    int total_lines;
 
-static int cursor_x = 0;
-static int cursor_y = 0;
+    int cursor_x;
+    int cursor_y;
 
-static int scroll_x = 0;
-static int scroll_y = 0;
+    int scroll_x;
+    int scroll_y;
+} editor_t;
+
+static editor_t *main_editor;
 
 static SDL_Keycode shift_table[][2] = {
     {SDLK_QUOTE, SDLK_QUOTEDBL},
@@ -53,7 +57,7 @@ static int min(int a, int b) {
     return b;
 }
 
-static doc_line_t *create_doc_line(void) {
+static doc_line_t *doc_line_alloc(void) {
     doc_line_t *d = malloc(sizeof(*d));
     memset(d, 0, sizeof(*d));
     d->line = malloc(8);
@@ -66,9 +70,9 @@ static void free_doc_line(doc_line_t *d) {
     free(d);
 }
 
-static doc_line_t *get_current_doc_line(void) {
-    doc_line_t *d = active_doc;
-    for (int y = 0; y < cursor_y; ++y) {
+static doc_line_t *get_current_doc_line(editor_t *editor) {
+    doc_line_t *d = editor->doc;
+    for (int y = 0; y < editor->cursor_y; ++y) {
         d = d->next;
     }
     return d;
@@ -98,8 +102,8 @@ static void insert_character(doc_line_t *d, int offset, char c) {
     ++d->stored;
 }
 
-static void split_line(doc_line_t *d, int offset) {
-    doc_line_t *n = create_doc_line();
+static void split_line(editor_t *editor, doc_line_t *d, int offset) {
+    doc_line_t *n = doc_line_alloc();
     n->next = d->next;
     n->prev = d;
     d->next = n;
@@ -110,10 +114,10 @@ static void split_line(doc_line_t *d, int offset) {
 
     d->stored -= n->stored;
 
-    ++total_lines;
+    ++editor->total_lines;
 }
 
-static void delete_at(doc_line_t *d, int offset, int dir) {
+static void delete_at(editor_t *editor, doc_line_t *d, int offset, int dir) {
     /* dir should be -1 (backspace) or 0 (delete) */
     if (dir == -1 && offset == 0) {
         doc_line_t *p = d->prev;
@@ -125,8 +129,8 @@ static void delete_at(doc_line_t *d, int offset, int dir) {
             return;
         }
 
-        --cursor_y;
-        cursor_x = p->stored;
+        --editor->cursor_y;
+        editor->cursor_x = p->stored;
 
         ensure_available(p, d->stored);
         memcpy(p->line + p->stored, d->line, d->stored);
@@ -137,12 +141,12 @@ static void delete_at(doc_line_t *d, int offset, int dir) {
         }
 
         free_doc_line(d);
-        --total_lines;
+        --editor->total_lines;
     } else if (dir == -1) {
         /* offset > 0 */
         bcopy(d->line + offset, d->line + offset - 1, d->stored - offset);
         --d->stored;
-        --cursor_x;
+        --editor->cursor_x;
     } else if (offset == d->stored) {
         /* dir == 0 */
         doc_line_t *n = d->next;
@@ -161,12 +165,20 @@ static void delete_at(doc_line_t *d, int offset, int dir) {
         }
 
         free_doc_line(n);
-        --total_lines;
+        --editor->total_lines;
     } else {
         /* dir == 0, offset < d->stored */
         bcopy(d->line + offset + 1, d->line + offset, d->stored - offset - 1);
         --d->stored;
     }
+}
+
+static editor_t *editor_alloc(void) {
+    editor_t *editor = malloc(sizeof(*editor));
+    memset(editor, 0, sizeof(*editor));
+    editor->doc = doc_line_alloc();
+    editor->total_lines = 1;
+    return editor;
 }
 
 static char get_character(SDL_Keycode sym, Uint16 mod) {
@@ -272,12 +284,12 @@ void render(void) {
 
     /* Render the editing text. */
 
-    doc_line_t *line = active_doc;
-    for (int y = 0; y < scroll_y && line; ++y, line = line->next) {}
+    doc_line_t *line = main_editor->doc;
+    for (int y = 0; y < main_editor->scroll_y && line; ++y, line = line->next) {}
 
     for (int y = 0; y < 21 && line; ++y, line = line->next) {
-        for (int x = scroll_x; x < min(line->stored, 78 + scroll_x); ++x) {
-            screen[(y + 2) * 80 + 1 + x - scroll_x] += line->line[x];
+        for (int x = main_editor->scroll_x; x < min(line->stored, 78 + main_editor->scroll_x); ++x) {
+            screen[(y + 2) * 80 + 1 + x - main_editor->scroll_x] += line->line[x];
         }
     }
 
@@ -289,7 +301,7 @@ void render(void) {
         screen[y * 80 + 79] = 0x70b0;
     }
 
-    screen[(3 + (int)((float) cursor_y / (total_lines - 1) * (21 - 3))) * 80 + 79] = 0x0000;
+    screen[(3 + (int)((float) main_editor->cursor_y / (main_editor->total_lines - 1) * (21 - 3))) * 80 + 79] = 0x0000;
 
     screen[22 * 80 + 79] = 0x7019;
 
@@ -300,7 +312,7 @@ void render(void) {
     for (int x = 2; x < 78; ++x) {
         screen[23 * 80 + x] = 0x70b0;
     }
-    screen[23 * 80 + (int)((float) scroll_x / 178 * 75) + 2] = 0x0000;
+    screen[23 * 80 + (int)((float) main_editor->scroll_x / 178 * 75) + 2] = 0x0000;
 
     screen[23 * 80 + 78] = 0x701a;
 
@@ -341,7 +353,7 @@ void render(void) {
     screen[24 * 80 + 62] += 0xb3;
 
     char *counter;
-    asprintf(&counter, "%05d:%03d", cursor_y + 1, cursor_x + 1);
+    asprintf(&counter, "%05d:%03d", main_editor->cursor_y + 1, main_editor->cursor_x + 1);
     int len = strlen(counter);
     for (int i = 0; i < len; ++i) {
         screen[24 * 80 + 70 + i] += counter[i];
@@ -350,30 +362,28 @@ void render(void) {
 
     /* Place the cursor. */
 
-    screen_cursor_x = cursor_x + 1 - scroll_x;
-    screen_cursor_y = cursor_y + 2 - scroll_y;
+    screen_cursor_x = main_editor->cursor_x + 1 - main_editor->scroll_x;
+    screen_cursor_y = main_editor->cursor_y + 2 - main_editor->scroll_y;
 }
 
-static void check_scroll(void) {
+static void check_scroll(editor_t *editor) {
     /* window height: 21 lines (2 to 22) */
-    if (cursor_y < scroll_y) {
-        scroll_y = cursor_y;
-    } else if (cursor_y > scroll_y + 20) {
-        scroll_y = cursor_y - 20;
+    if (editor->cursor_y < editor->scroll_y) {
+        editor->scroll_y = editor->cursor_y;
+    } else if (editor->cursor_y > editor->scroll_y + 20) {
+        editor->scroll_y = editor->cursor_y - 20;
     }
 
     /* window width: 78 characters (1 to 78) */
-    if (cursor_x < scroll_x) {
-        scroll_x = cursor_x;
-    } else if (cursor_x > scroll_x + 77) {
-        scroll_x = cursor_x - 77;
+    if (editor->cursor_x < editor->scroll_x) {
+        editor->scroll_x = editor->cursor_x;
+    } else if (editor->cursor_x > editor->scroll_x + 77) {
+        editor->scroll_x = editor->cursor_x - 77;
     }
 }
 
 void qb_init(void) {
-    active_doc = create_doc_line();
-
-    total_lines = 1;
+    main_editor = editor_alloc();
 
     render();
 }
@@ -384,45 +394,47 @@ void qb_keypress(SDL_Keycode sym, Uint16 mod) {
         return;
     }
 
-    if (sym == SDLK_DOWN && cursor_y < total_lines - 1) {
-        ++cursor_y;
-        int max = get_current_doc_line()->stored;
-        if (cursor_x > max) {
-            cursor_x = max;
+    editor_t *editor = main_editor;
+
+    if (sym == SDLK_DOWN && editor->cursor_y < editor->total_lines - 1) {
+        ++editor->cursor_y;
+        int max = get_current_doc_line(editor)->stored;
+        if (editor->cursor_x > max) {
+            editor->cursor_x = max;
         }
-    } else if (sym == SDLK_UP && cursor_y > 0) {
-        --cursor_y;
-        int max = get_current_doc_line()->stored;
-        if (cursor_x > max) {
-            cursor_x = max;
+    } else if (sym == SDLK_UP && editor->cursor_y > 0) {
+        --editor->cursor_y;
+        int max = get_current_doc_line(editor)->stored;
+        if (editor->cursor_x > max) {
+            editor->cursor_x = max;
         }
-    } else if (sym == SDLK_LEFT && cursor_x > 0) {
-        --cursor_x;
+    } else if (sym == SDLK_LEFT && editor->cursor_x > 0) {
+        --editor->cursor_x;
     } else if (sym == SDLK_RIGHT) {
-        if (cursor_x < get_current_doc_line()->stored) {
-            ++cursor_x;
+        if (editor->cursor_x < get_current_doc_line(editor)->stored) {
+            ++editor->cursor_x;
         }
-    } else if (is_printable_key(sym) && get_current_doc_line()->stored < 255) {
+    } else if (is_printable_key(sym) && get_current_doc_line(editor)->stored < 255) {
         insert_character(
-            get_current_doc_line(),
-            cursor_x,
+            get_current_doc_line(editor),
+            editor->cursor_x,
             get_character(sym, mod));
-        ++cursor_x;
+        ++editor->cursor_x;
     } else if (sym == SDLK_RETURN) {
-        split_line(get_current_doc_line(), cursor_x);
-        cursor_x = 0;
-        ++cursor_y;
+        split_line(editor, get_current_doc_line(editor), editor->cursor_x);
+        editor->cursor_x = 0;
+        ++editor->cursor_y;
     } else if (sym == SDLK_BACKSPACE) {
-        delete_at(get_current_doc_line(), cursor_x, -1);
+        delete_at(editor, get_current_doc_line(editor), editor->cursor_x, -1);
     } else if (sym == SDLK_DELETE) {
-        delete_at(get_current_doc_line(), cursor_x, 0);
+        delete_at(editor, get_current_doc_line(editor), editor->cursor_x, 0);
     } else if (sym == SDLK_HOME) {
-        cursor_x = 0;
+        editor->cursor_x = 0;
     } else if (sym == SDLK_END) {
-        cursor_x = get_current_doc_line()->stored;
+        editor->cursor_x = get_current_doc_line(editor)->stored;
     }
 
-    check_scroll();
+    check_scroll(editor);
     render();
     text_refresh();
 }
