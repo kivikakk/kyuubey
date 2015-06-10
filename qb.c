@@ -14,14 +14,16 @@ typedef struct doc_line {
 } doc_line_t;
 
 typedef struct {
+    char *title;
+    char is_immediate_window;
+
     doc_line_t *doc;
     int total_lines;
 
-    int cursor_x;
-    int cursor_y;
+    int top, height;
 
-    int scroll_x;
-    int scroll_y;
+    int cursor_x, cursor_y;
+    int scroll_x, scroll_y;
 } editor_t;
 
 static editor_t *main_editor;
@@ -173,11 +175,14 @@ static void delete_at(editor_t *editor, doc_line_t *d, int offset, int dir) {
     }
 }
 
-static editor_t *editor_alloc(void) {
+static editor_t *editor_alloc(char const *title, int top, int height) {
     editor_t *editor = malloc(sizeof(*editor));
     memset(editor, 0, sizeof(*editor));
+    editor->title = strdup(title);
     editor->doc = doc_line_alloc();
     editor->total_lines = 1;
+    editor->top = top;
+    editor->height = height;
     return editor;
 }
 
@@ -246,36 +251,37 @@ void render(void) {
     screen[0 * 80 + 76] = 0x7000 + 'l';
     screen[0 * 80 + 77] = 0x7000 + 'p';
 
+    editor_t *editor = main_editor;
+
     /* Render the titlebar. */
 
-    screen[1 * 80 + 0] = 0x17da;
+    screen[editor->top * 80 + 0] = 0x17da;
     for (int x = 1; x < 79; ++x) {
-        screen[1 * 80 + x] = 0x17c4;
+        screen[editor->top * 80 + x] = 0x17c4;
     }
 
-    const char *file = "Untitled";
-    int flen = strlen(file);
+    int flen = strlen(editor->title);
     int start = 40 - flen / 2;
-    screen[1 * 80 + start - 1] = 0x7000;
+    screen[editor->top * 80 + start - 1] = 0x7000;
 
     int j;
     for (j = 0; j < flen; ++j) {
-        screen[1 * 80 + start + j] = 0x7000 | file[j];
+        screen[editor->top * 80 + start + j] = 0x7000 | editor->title[j];
     }
 
-    screen[1 * 80 + start + j] = 0x7000;
+    screen[editor->top * 80 + start + j] = 0x7000;
 
     /* Render the little fullscreen widget at the right. */
 
-    screen[1 * 80 + 75] = 0x17b4;
-    screen[1 * 80 + 76] = 0x7112;
-    screen[1 * 80 + 77] = 0x17c3;
+    screen[editor->top * 80 + 75] = 0x17b4;
+    screen[editor->top * 80 + 76] = 0x7112;
+    screen[editor->top * 80 + 77] = 0x17c3;
 
-    screen[1 * 80 + 79] = 0x17bf;
+    screen[editor->top * 80 + 79] = 0x17bf;
 
     /* Draw the editing area and borders. */
 
-    for (int y = 2; y < 24; ++y) {
+    for (int y = editor->top + 1; y < editor->top + 1 + editor->height; ++y) {
         screen[y * 80 + 0] = screen[y * 80 + 79] = 0x17b3;
         for (int x = 1; x < 79; ++x) {
             screen[y * 80 + x] = 0x1700;
@@ -287,34 +293,36 @@ void render(void) {
     doc_line_t *line = main_editor->doc;
     for (int y = 0; y < main_editor->scroll_y && line; ++y, line = line->next) {}
 
-    for (int y = 0; y < 21 && line; ++y, line = line->next) {
+    for (int y = 0; y < editor->height && line; ++y, line = line->next) {
         for (int x = main_editor->scroll_x; x < min(line->stored, 78 + main_editor->scroll_x); ++x) {
-            screen[(y + 2) * 80 + 1 + x - main_editor->scroll_x] += line->line[x];
+            screen[(y + editor->top + 1) * 80 + 1 + x - main_editor->scroll_x] += line->line[x];
         }
     }
 
     /* Draw the vertical scrollbar. */
 
-    screen[2 * 80 + 79] = 0x7018;
+    screen[(editor->top + 1) * 80 + 79] = 0x7018;
 
-    for (int y = 3; y < 22; ++y) {
+    for (int y = editor->top + 2; y < editor->top + editor->height - 1; ++y) {
         screen[y * 80 + 79] = 0x70b0;
     }
 
-    screen[(3 + (int)((float) main_editor->cursor_y / (main_editor->total_lines - 1) * (21 - 3))) * 80 + 79] = 0x0000;
+    if (editor->height > 4) {
+        screen[(editor->top + 2 + (int)((float) main_editor->cursor_y / (main_editor->total_lines - 1) * (editor->height - 4))) * 80 + 79] = 0x0000;
+    }
 
-    screen[22 * 80 + 79] = 0x7019;
+    screen[(editor->top + editor->height - 1) * 80 + 79] = 0x7019;
 
     /* Draw the horizontal scrollbar. */
 
-    screen[23 * 80 + 1] = 0x701b;
+    screen[(editor->top + editor->height) * 80 + 1] = 0x701b;
 
     for (int x = 2; x < 78; ++x) {
-        screen[23 * 80 + x] = 0x70b0;
+        screen[(editor->top + editor->height) * 80 + x] = 0x70b0;
     }
-    screen[23 * 80 + (int)((float) main_editor->scroll_x / 178 * 75) + 2] = 0x0000;
+    screen[(editor->top + editor->height) * 80 + (int)((float) main_editor->scroll_x / 178 * 75) + 2] = 0x0000;
 
-    screen[23 * 80 + 78] = 0x701a;
+    screen[(editor->top + editor->height) * 80 + 78] = 0x701a;
 
     /* Draw the help line. */
 
@@ -367,11 +375,10 @@ void render(void) {
 }
 
 static void check_scroll(editor_t *editor) {
-    /* window height: 21 lines (2 to 22) */
     if (editor->cursor_y < editor->scroll_y) {
         editor->scroll_y = editor->cursor_y;
-    } else if (editor->cursor_y > editor->scroll_y + 20) {
-        editor->scroll_y = editor->cursor_y - 20;
+    } else if (editor->cursor_y > editor->scroll_y + editor->height - 2) {
+        editor->scroll_y = editor->cursor_y - editor->height + 2;
     }
 
     /* window width: 78 characters (1 to 78) */
@@ -383,7 +390,7 @@ static void check_scroll(editor_t *editor) {
 }
 
 void qb_init(void) {
-    main_editor = editor_alloc();
+    main_editor = editor_alloc("Untitled", 1, 22);
 
     render();
 }
