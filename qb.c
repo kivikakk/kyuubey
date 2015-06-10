@@ -446,6 +446,26 @@ void qb_keyup(SDL_Keycode sym) {
 }
 
 void qb_keypress(SDL_Keycode sym, Uint16 mod) {
+    if (menubar_focus) {
+        if (sym == SDLK_LEFT) {
+            --selected_menu;
+        } else if (sym == SDLK_RIGHT) {
+            ++selected_menu;
+        } else if (sym == SDLK_ESCAPE) {
+            menubar_focus = 0;
+        }
+
+        if (selected_menu < 0) {
+            selected_menu += 9;
+        } else if (selected_menu > 8) {
+            selected_menu -= 9;
+        }
+
+        render();
+        text_refresh();
+        return;
+    }
+
     if (sym == SDLK_ESCAPE) {
         qb_running = 0;
         return;
