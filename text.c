@@ -1,5 +1,6 @@
-#include "text.h"
+#include "main.h"
 #include "renderer.h"
+#include "text.h"
 
 unsigned short screen[80 * 25];
 int screen_cursor_x;
@@ -12,7 +13,7 @@ void text_refresh(void) {
 
     for (int y = 0; y < 25; ++y) {
         for (int x = 0; x < 80; ++x) {
-            render_sfont(sfont, screen[y * 80 + x], x, y);
+            text_refresh_at(x, y);
         }
     }
 
@@ -24,7 +25,14 @@ void text_refresh(void) {
 }
 
 void text_refresh_at(int x, int y) {
-    render_sfont(sfont, screen[y * 80 + x], x, y);
+    unsigned short pair = screen[y * 80 + x];
+    if (mouse_x / FONT_WIDTH == x && mouse_y / FONT_HEIGHT == y) {
+        pair =
+            ((7 - (pair >> 12)) << 12) |
+            ((7 - ((pair >> 8) & 0xF)) << 8) |
+            (pair & 0xFF);
+    }
+    render_sfont(sfont, pair, x, y);
 }
 
 void text_draw_cursor(int x, int y) {

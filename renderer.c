@@ -38,6 +38,8 @@ int renderer_init(void) {
 
     sfont = read_raw_sdlfont("cp437.vga");
 
+    SDL_ShowCursor(SDL_DISABLE);
+
     return 0;
 }
 

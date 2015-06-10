@@ -7,6 +7,7 @@ extern int qb_running;
 
 void qb_init(void);
 void qb_keypress(SDL_Keycode sym, Uint16 mod);
+void qb_mouseclick(int button);
 
 #endif
 

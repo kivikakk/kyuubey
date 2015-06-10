@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "main.h"
 #include "qb.h"
 #include "text.h"
 
@@ -457,6 +458,11 @@ void qb_keypress(SDL_Keycode sym, Uint16 mod) {
     }
 
     check_scroll(editor);
+    render();
+    text_refresh();
+}
+
+void qb_mouseclick(int button) {
     render();
     text_refresh();
 }

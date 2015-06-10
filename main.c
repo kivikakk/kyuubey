@@ -1,7 +1,11 @@
-#include "renderer.h"
-#include "qb.h"
-#include "text.h"
+#include "main.h"
 #include "parser.h"
+#include "qb.h"
+#include "renderer.h"
+#include "text.h"
+
+int mouse_x = 0;
+int mouse_y = 0;
 
 static void loop(void);
 
@@ -55,24 +59,46 @@ void loop(void) {
 
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
-                case SDL_QUIT:
-                    return;
+            case SDL_QUIT:
+                return;
 
-                case SDL_KEYDOWN:
-                    if (event.key.repeat) {
-                        break;
-                    }
-
-                    qb_keypress(event.key.keysym.sym, event.key.keysym.mod);
-                    keydown_tick = SDL_GetTicks();
-                    keydown_sym = event.key.keysym.sym;
-                    keydown_mod = event.key.keysym.mod;
-                    typematic_on = 0;
+            case SDL_KEYDOWN:
+                if (event.key.repeat) {
                     break;
+                }
 
-                case SDL_KEYUP:
-                    keydown_tick = 0;
-                    break;
+                qb_keypress(event.key.keysym.sym, event.key.keysym.mod);
+                keydown_tick = SDL_GetTicks();
+                keydown_sym = event.key.keysym.sym;
+                keydown_mod = event.key.keysym.mod;
+                typematic_on = 0;
+                break;
+
+            case SDL_KEYUP:
+                keydown_tick = 0;
+                break;
+
+            case SDL_MOUSEMOTION: {
+                int old_x = mouse_x,
+                    old_y = mouse_y;
+                mouse_x = event.motion.x;
+                mouse_y = event.motion.y;
+
+                if (mouse_x != old_x || mouse_y != old_y) {
+                    text_refresh();
+                }
+                break;
+            }
+
+            case SDL_MOUSEBUTTONDOWN:
+                mouse_x = event.button.x;
+                mouse_y = event.button.y;
+                text_refresh();
+                if (event.button.button == SDL_BUTTON_LEFT ||
+                        event.button.button == SDL_BUTTON_RIGHT) {
+                    qb_mouseclick(event.button.button == SDL_BUTTON_LEFT ?  1 : 2);
+                }
+                break;
             }
         }
 
