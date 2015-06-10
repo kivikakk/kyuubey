@@ -301,17 +301,17 @@ void render(void) {
 
     /* Draw the vertical scrollbar. */
 
-    screen[(editor->top + 1) * 80 + 79] = 0x7018;
+    if (editor->height > 3) {
+        screen[(editor->top + 1) * 80 + 79] = 0x7018;
 
-    for (int y = editor->top + 2; y < editor->top + editor->height - 1; ++y) {
-        screen[y * 80 + 79] = 0x70b0;
-    }
+        for (int y = editor->top + 2; y < editor->top + editor->height - 1; ++y) {
+            screen[y * 80 + 79] = 0x70b0;
+        }
 
-    if (editor->height > 4) {
         screen[(editor->top + 2 + (int)((float) main_editor->cursor_y / (main_editor->total_lines - 1) * (editor->height - 4))) * 80 + 79] = 0x0000;
-    }
 
-    screen[(editor->top + editor->height - 1) * 80 + 79] = 0x7019;
+        screen[(editor->top + editor->height - 1) * 80 + 79] = 0x7019;
+    }
 
     /* Draw the horizontal scrollbar. */
 
@@ -390,7 +390,7 @@ static void check_scroll(editor_t *editor) {
 }
 
 void qb_init(void) {
-    main_editor = editor_alloc("Untitled", 1, 22);
+    main_editor = editor_alloc("Untitled", 1, 4);
 
     render();
 }
