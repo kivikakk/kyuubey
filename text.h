@@ -9,6 +9,7 @@ void text_cursor_toggle(void);
 extern unsigned short screen[80 * 25];
 extern int screen_cursor_x;
 extern int screen_cursor_y;
+extern int screen_cursor_disable;
 
 #endif
 

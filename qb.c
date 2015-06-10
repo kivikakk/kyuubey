@@ -434,10 +434,10 @@ void qb_keyup(SDL_Keycode sym) {
         alt_held = 0;
 
         if (!menubar_focus) {
-            menubar_focus = 1;
+            screen_cursor_disable = menubar_focus = 1;
             selected_menu = 0;
         } else {
-            menubar_focus = 0;
+            screen_cursor_disable = menubar_focus = 0;
         }
 
         render();
@@ -452,7 +452,7 @@ void qb_keypress(SDL_Keycode sym, Uint16 mod) {
         } else if (sym == SDLK_RIGHT) {
             ++selected_menu;
         } else if (sym == SDLK_ESCAPE) {
-            menubar_focus = 0;
+            screen_cursor_disable = menubar_focus = 0;
         }
 
         if (selected_menu < 0) {

@@ -5,6 +5,7 @@
 unsigned short screen[80 * 25];
 int screen_cursor_x;
 int screen_cursor_y;
+int screen_cursor_disable = 0;
 
 static int cursor_on = 1;
 
@@ -17,7 +18,7 @@ void text_refresh(void) {
         }
     }
 
-    if (cursor_on) {
+    if (cursor_on && !screen_cursor_disable) {
         text_draw_cursor(screen_cursor_x, screen_cursor_y);
     }
 
