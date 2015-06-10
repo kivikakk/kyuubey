@@ -27,6 +27,7 @@ typedef struct {
 } editor_t;
 
 static editor_t *main_editor;
+static editor_t *immediate_editor;
 
 static SDL_Keycode shift_table[][2] = {
     {SDLK_QUOTE, SDLK_QUOTEDBL},
@@ -209,6 +210,84 @@ static int is_printable_key(SDL_Keycode sym) {
     return sym >= SDLK_SPACE && sym <= SDLK_z;
 }
 
+void render_editor(editor_t *editor, int has_focus) {
+    /* Render the titlebar. */
+
+    screen[editor->top * 80 + 0] = editor->top == 1 ? 0x17da : 0x17c3;
+    for (int x = 1; x < 79; ++x) {
+        screen[editor->top * 80 + x] = 0x17c4;
+    }
+
+    int flen = strlen(editor->title);
+    int start = 40 - flen / 2;
+    unsigned short colour = has_focus ? 0x7100 : 0x1700;
+    screen[editor->top * 80 + start - 1] = colour;
+
+    int j;
+    for (j = 0; j < flen; ++j) {
+        screen[editor->top * 80 + start + j] = colour | editor->title[j];
+    }
+
+    screen[editor->top * 80 + start + j] = colour;
+    screen[editor->top * 80 + 79] = editor->top == 1 ? 0x17bf : 0x17b4;
+
+    if (!editor->is_immediate_window) {
+        /* Render the little fullscreen widget at the right. */
+
+        screen[editor->top * 80 + 75] = 0x17b4;
+        /* If maximised: screen[editor->top * 80 + 76] = 0x7112; */
+        screen[editor->top * 80 + 76] = 0x7118;
+        screen[editor->top * 80 + 77] = 0x17c3;
+    }
+
+    /* Draw the editing area and borders. */
+
+    for (int y = editor->top + 1; y < editor->top + 1 + editor->height; ++y) {
+        screen[y * 80 + 0] = screen[y * 80 + 79] = 0x17b3;
+        for (int x = 1; x < 79; ++x) {
+            screen[y * 80 + x] = 0x1700;
+        }
+    }
+
+    /* Render the editing text. */
+
+    doc_line_t *line = editor->doc;
+    for (int y = 0; y < editor->scroll_y && line; ++y, line = line->next) {}
+
+    for (int y = 0; y < editor->height && line; ++y, line = line->next) {
+        for (int x = editor->scroll_x; x < min(line->stored, 78 + editor->scroll_x); ++x) {
+            screen[(y + editor->top + 1) * 80 + 1 + x - editor->scroll_x] += line->line[x];
+        }
+    }
+
+    if (has_focus && !editor->is_immediate_window) {
+        /* Draw the vertical scrollbar. */
+
+        if (editor->height > 3) {
+            screen[(editor->top + 1) * 80 + 79] = 0x7018;
+
+            for (int y = editor->top + 2; y < editor->top + editor->height - 1; ++y) {
+                screen[y * 80 + 79] = 0x70b0;
+            }
+
+            screen[(editor->top + 2 + (int)((float) editor->cursor_y / (editor->total_lines - 1) * (editor->height - 4))) * 80 + 79] = 0x0000;
+
+            screen[(editor->top + editor->height - 1) * 80 + 79] = 0x7019;
+        }
+
+        /* Draw the horizontal scrollbar. */
+
+        screen[(editor->top + editor->height) * 80 + 1] = 0x701b;
+
+        for (int x = 2; x < 78; ++x) {
+            screen[(editor->top + editor->height) * 80 + x] = 0x70b0;
+        }
+        screen[(editor->top + editor->height) * 80 + (int)((float) editor->scroll_x / 178 * 75) + 2] = 0x0000;
+
+        screen[(editor->top + editor->height) * 80 + 78] = 0x701a;
+    }
+}
+
 void render(void) {
     for (int i = 0; i < 80 * 25; ++i) {
         screen[i] = 0x1700;
@@ -251,78 +330,12 @@ void render(void) {
     screen[0 * 80 + 76] = 0x7000 + 'l';
     screen[0 * 80 + 77] = 0x7000 + 'p';
 
-    editor_t *editor = main_editor;
+    /* Draw the editors. */
 
-    /* Render the titlebar. */
+    editor_t *active_editor = main_editor;
 
-    screen[editor->top * 80 + 0] = 0x17da;
-    for (int x = 1; x < 79; ++x) {
-        screen[editor->top * 80 + x] = 0x17c4;
-    }
-
-    int flen = strlen(editor->title);
-    int start = 40 - flen / 2;
-    screen[editor->top * 80 + start - 1] = 0x7000;
-
-    int j;
-    for (j = 0; j < flen; ++j) {
-        screen[editor->top * 80 + start + j] = 0x7000 | editor->title[j];
-    }
-
-    screen[editor->top * 80 + start + j] = 0x7000;
-
-    /* Render the little fullscreen widget at the right. */
-
-    screen[editor->top * 80 + 75] = 0x17b4;
-    screen[editor->top * 80 + 76] = 0x7112;
-    screen[editor->top * 80 + 77] = 0x17c3;
-
-    screen[editor->top * 80 + 79] = 0x17bf;
-
-    /* Draw the editing area and borders. */
-
-    for (int y = editor->top + 1; y < editor->top + 1 + editor->height; ++y) {
-        screen[y * 80 + 0] = screen[y * 80 + 79] = 0x17b3;
-        for (int x = 1; x < 79; ++x) {
-            screen[y * 80 + x] = 0x1700;
-        }
-    }
-
-    /* Render the editing text. */
-
-    doc_line_t *line = main_editor->doc;
-    for (int y = 0; y < main_editor->scroll_y && line; ++y, line = line->next) {}
-
-    for (int y = 0; y < editor->height && line; ++y, line = line->next) {
-        for (int x = main_editor->scroll_x; x < min(line->stored, 78 + main_editor->scroll_x); ++x) {
-            screen[(y + editor->top + 1) * 80 + 1 + x - main_editor->scroll_x] += line->line[x];
-        }
-    }
-
-    /* Draw the vertical scrollbar. */
-
-    if (editor->height > 3) {
-        screen[(editor->top + 1) * 80 + 79] = 0x7018;
-
-        for (int y = editor->top + 2; y < editor->top + editor->height - 1; ++y) {
-            screen[y * 80 + 79] = 0x70b0;
-        }
-
-        screen[(editor->top + 2 + (int)((float) main_editor->cursor_y / (main_editor->total_lines - 1) * (editor->height - 4))) * 80 + 79] = 0x0000;
-
-        screen[(editor->top + editor->height - 1) * 80 + 79] = 0x7019;
-    }
-
-    /* Draw the horizontal scrollbar. */
-
-    screen[(editor->top + editor->height) * 80 + 1] = 0x701b;
-
-    for (int x = 2; x < 78; ++x) {
-        screen[(editor->top + editor->height) * 80 + x] = 0x70b0;
-    }
-    screen[(editor->top + editor->height) * 80 + (int)((float) main_editor->scroll_x / 178 * 75) + 2] = 0x0000;
-
-    screen[(editor->top + editor->height) * 80 + 78] = 0x701a;
+    render_editor(main_editor, active_editor == main_editor);
+    render_editor(immediate_editor, active_editor == immediate_editor);
 
     /* Draw the help line. */
 
@@ -361,7 +374,7 @@ void render(void) {
     screen[24 * 80 + 62] += 0xb3;
 
     char *counter;
-    asprintf(&counter, "%05d:%03d", main_editor->cursor_y + 1, main_editor->cursor_x + 1);
+    asprintf(&counter, "%05d:%03d", active_editor->cursor_y + 1, active_editor->cursor_x + 1);
     int len = strlen(counter);
     for (int i = 0; i < len; ++i) {
         screen[24 * 80 + 70 + i] += counter[i];
@@ -370,8 +383,8 @@ void render(void) {
 
     /* Place the cursor. */
 
-    screen_cursor_x = main_editor->cursor_x + 1 - main_editor->scroll_x;
-    screen_cursor_y = main_editor->cursor_y + 2 - main_editor->scroll_y;
+    screen_cursor_x = active_editor->cursor_x + 1 - active_editor->scroll_x;
+    screen_cursor_y = active_editor->cursor_y + 1 - active_editor->scroll_y + active_editor->top;
 }
 
 static void check_scroll(editor_t *editor) {
@@ -390,7 +403,9 @@ static void check_scroll(editor_t *editor) {
 }
 
 void qb_init(void) {
-    main_editor = editor_alloc("Untitled", 1, 4);
+    main_editor = editor_alloc("Untitled", 1, 19);
+    immediate_editor = editor_alloc("Immediate", 21, 2);
+    immediate_editor->is_immediate_window = 1;
 
     render();
 }
