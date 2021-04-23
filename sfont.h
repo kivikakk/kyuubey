@@ -1,8 +1,8 @@
 #ifndef SFONT_H
 #define SFONT_H
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_render.h>
+#include <SDL.h>
+#include <SDL_render.h>
 
 /* FONT_WIDTH is relatively more involved to change as `rawchar' is defined in
  * terms of `unsigned char'. */

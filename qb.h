@@ -1,7 +1,7 @@
 #ifndef QB_H
 #define QB_H
 
-#include <SDL2/sdl_keycode.h>
+#include <SDL_keycode.h>
 
 extern int qb_running;
 
