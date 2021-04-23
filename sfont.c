@@ -42,7 +42,9 @@ sdlfont_t *read_raw_sdlfont(const char *filename) {
         SDL_Texture *t = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, FONT_WIDTH, FONT_HEIGHT);
         SDL_SetTextureBlendMode(t, SDL_BLENDMODE_BLEND);
         SDL_SetRenderTarget(renderer, t);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
         SDL_RenderClear(renderer);
+        SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, SDL_ALPHA_OPAQUE);
 
         for (int row = 0; row < FONT_HEIGHT; ++row) {
             unsigned char rowdata = c.bitmap[row],

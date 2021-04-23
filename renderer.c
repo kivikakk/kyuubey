@@ -30,7 +30,7 @@ int renderer_init(void) {
     renderer = SDL_CreateRenderer(
         window,
         -1,
-        SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+        SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
 
     if (!renderer) {
         fprintf(stderr, "SDL_CreateRenderer error: %s\n", SDL_GetError());
