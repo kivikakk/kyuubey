@@ -25,6 +25,8 @@ int renderer_init(void) {
         return 1;
     }
 
+    fprintf(stderr, "window format: %s\n", SDL_GetPixelFormatName(SDL_GetWindowPixelFormat(window)));
+
     renderer = SDL_CreateRenderer(
         window,
         -1,
@@ -35,6 +37,20 @@ int renderer_init(void) {
         SDL_Quit();
         return 1;
     }
+
+    SDL_RendererInfo info;
+    if (SDL_GetRendererInfo(renderer, &info)) {
+        fprintf(stderr, "SDL_GetRendererInfo error: %s\n", SDL_GetError());
+        SDL_Quit();
+        return 1;
+    }
+
+    fprintf(stderr, "Renderer: %s / %d / %d format(s)\n",
+        info.name,
+        info.flags,
+        info.num_texture_formats);
+    for (int i = 0; i < info.num_texture_formats; ++i)
+        fprintf(stderr, "%d. %s\n", i + 1, SDL_GetPixelFormatName(info.texture_formats[i]));
 
     sfont = read_raw_sdlfont("cp437.vga");
 
