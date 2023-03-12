@@ -4,7 +4,7 @@ BUILD_DIR = out
 CFLAGS = -I. -Iout $(shell $(SDL2_CONFIG) --cflags) -g -Wall -Wno-unneeded-internal-declaration -Wno-unused-function
 LDFLAGS = $(shell $(SDL2_CONFIG) --libs) -lSDL2main
 
-SDL2_CONFIG = /usr/local/bin/sdl2-config
+SDL2_CONFIG = /opt/homebrew/bin/sdl2-config
 SRCS = $(wildcard *.c)
 OBJS = $(SRCS:%.c=$(BUILD_DIR)/%.o) $(BUILD_DIR)/lang.tab.o $(BUILD_DIR)/lang.yy.o
 DEPS = $(OBJS:$(BUILD_DIR)/%.o=$(BUILD_DIR)/%.d)
