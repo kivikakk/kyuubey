@@ -3,7 +3,7 @@
 %}
 
 %parse-param {ast_t *ast}
-%error-verbose
+%define parse.error verbose
 
 %union {
     ast_comment_t *comment;
